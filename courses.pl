@@ -2,7 +2,7 @@
 % Authors: Reed Esler, Dan Glaser
 
 
-
+:-style_check(-discontiguous).
 
 %
 % Course Information Database
@@ -16,6 +16,57 @@
 % prop(course, section, _, _).
 %
 
+compatableSections(Course1, Sec1, Course2, Sec2) :-
+  prop(Course1, Sec1, day, Day1),
+  prop(Course2, Sec2, day, Day2),
+  Day1 \= Day2.
+
+compatableSections(Course1, Sec1, Course2, Sec2) :-
+  prop(Course1, Sec1, sTime, Stime1),
+  prop(Course1, Sec1, eTime, Etime1),
+  prop(Course2, Sec2, sTime, Stime2),
+  prop(Course2, Sec2, eTime, Etime2),
+  (
+    Etime1 < Stime2;
+    Stime1 > Etime2
+  ).
+
+
+
+prop(test1, 101, sTime, 11).
+prop(test1, 101, eTime, 12).
+prop(test1, 101, day, mwf).
+
+prop(test2, 101, sTime, 14).
+prop(test2, 101, eTime, 15).
+prop(test2, 101, day, mwf).
+
+prop(test3, 101, sTime, 8).
+prop(test3, 101, eTime, 9).
+prop(test3, 101, day, mwf).
+
+% compatableSections(test1, 101, test2, 101). % should be true
+% compatableSections(test1, 101, test3, 101). % should be true
+
+prop(test4, 101, sTime, 10).
+prop(test4, 101, eTime, 11.5).
+prop(test4, 101, day, mwf).
+
+% compatableSections(test1, 101, test4, 101). % should be false
+
+prop(test5, 101, sTime, 11.5).
+prop(test5, 101, eTime, 13).
+prop(test5, 101, day, mwf).
+
+% compatableSections(test1, 101, test5, 101). % should be false
+
+prop(test6, 101, sTime, 11.5).
+prop(test6, 101, eTime, 13).
+prop(test6, 101, day, tth).
+
+% compatableSections(test1, 101, test6, 101). % should be true
+
+
 % course 110
 prop(110, _, course, 110).
 prop(110, _, name, "Computation, Programs and Programming").
@@ -25,8 +76,8 @@ prop(110, _, prereq, none).
 prop(110, 101, term, 1).
 prop(110, 101, instructor, "Gregor Kiczales").
 prop(110, 101, day, tth).
-prop(110, 101, sTime, "12:30").
-prop(110, 101, eTime, "14:00").
+prop(110, 101, sTime, 12.5).
+prop(110, 101, eTime, 14).
 prop(110, 101, building, "Woodward").
 prop(110, 101, room, 2).
 
@@ -34,8 +85,8 @@ prop(110, 101, room, 2).
 prop(110, 103, term, 1).
 prop(110, 103, instructor, "Oluwakemi Ola").
 prop(110, 103, day, mwf).
-prop(110, 103, sTime, "16:00").
-prop(110, 103, eTime, "17:00").
+prop(110, 103, sTime, 16).
+prop(110, 103, eTime, 17).
 prop(110, 103, building, "Wesbrook").
 prop(110, 103, room, 100).
 
@@ -43,8 +94,8 @@ prop(110, 103, room, 100).
 prop(110, 201, term, 2).
 prop(110, 201, instructor, "Anthony Estey").
 prop(110, 201, day, tth).
-prop(110, 201, sTime, "15:30").
-prop(110, 201, eTime, "17:00").
+prop(110, 201, sTime, 15.5).
+prop(110, 201, eTime, 17).
 prop(110, 201, building, "Neville Scarfe").
 prop(110, 201, room, 100).
 
@@ -52,8 +103,8 @@ prop(110, 201, room, 100).
 prop(110, 202, term, 2).
 prop(110, 202, instructor, "Oluwakemi Ola").
 prop(110, 202, day, mwf).
-prop(110, 202, sTime, "15:00").
-prop(110, 202, eTime, "16:00").
+prop(110, 202, sTime, 15).
+prop(110, 202, eTime, 16).
 prop(110, 202, building, "Forest Sciences Centre").
 prop(110, 202, room, 1005).
 
@@ -61,8 +112,8 @@ prop(110, 202, room, 1005).
 prop(110, 203, term, 2).
 prop(110, 203, instructor, "Anthony Estey").
 prop(110, 203, day, tth).
-prop(110, 203, sTime, "9:30").
-prop(110, 203, eTime, "11:00").
+prop(110, 203, sTime, 9.5).
+prop(110, 203, eTime, 11).
 prop(110, 203, building, "Chemical and Biological Engineering Building").
 prop(110, 203, room, 101).
 
@@ -76,8 +127,8 @@ prop(121, _, prereq, none).
 prop(121, 101, term, 1).
 prop(121, 101, instructor, "Patrice Belleville").
 prop(121, 101, day, tth).
-prop(121, 101, sTime, 9:30).
-prop(121, 101, eTime, 11:00).
+prop(121, 101, sTime, 9.5).
+prop(121, 101, eTime, 11).
 prop(121, 101, building, "Pharmaceutical Sciences Building").
 prop(121, 101, room, 1201).
 
@@ -85,8 +136,8 @@ prop(121, 101, room, 1201).
 prop(121, 102, term, 1).
 prop(121, 102, instructor, "Frederick Shepherd").
 prop(121, 102, day, tth).
-prop(121, 102, sTime, 15:30).
-prop(121, 102, eTime, 17:00).
+prop(121, 102, sTime, 15.5).
+prop(121, 102, eTime, 17).
 prop(121, 102, building, "Hugh Dempster Pavilion").
 prop(121, 102, room, 310).
 
@@ -94,8 +145,8 @@ prop(121, 102, room, 310).
 prop(121, 103, term, 1).
 prop(121, 103, instructor, "Cinda Heeren").
 prop(121, 103, day, tth).
-prop(121, 103, sTime, 17:00).
-prop(121, 103, eTime, 18:30).
+prop(121, 103, sTime, 17).
+prop(121, 103, eTime, 18.5).
 prop(121, 103, building, "Hugh Dempster Pavilion").
 prop(121, 103, room, 310).
 
@@ -103,8 +154,8 @@ prop(121, 103, room, 310).
 prop(121, 201, term, 2).
 prop(121, 201, instructor, "Cinda Heeren").
 prop(121, 201, day, mwf).
-prop(121, 201, sTime, 9:00).
-prop(121, 201, eTime, 10:00).
+prop(121, 201, sTime, 9).
+prop(121, 201, eTime, 10).
 prop(121, 201, building, "West Mall Swing Space").
 prop(121, 201, room, 121).
 
@@ -112,8 +163,8 @@ prop(121, 201, room, 121).
 prop(121, 202, term, 2).
 prop(121, 202, instructor, "Patrice Belleville").
 prop(121, 202, day, mwf).
-prop(121, 202, sTime, 12:00).
-prop(121, 202, eTime, 13:00).
+prop(121, 202, sTime, 12).
+prop(121, 202, eTime, 13).
 prop(121, 202, building, "MacMillan").
 prop(121, 202, room, 166).
 
@@ -121,8 +172,8 @@ prop(121, 202, room, 166).
 prop(121, 203, term, 2).
 prop(121, 203, instructor, "Patrice Belleville").
 prop(121, 203, day, mwf).
-prop(121, 203, sTime, 16:00).
-prop(121, 203, eTime, 17:00).
+prop(121, 203, sTime, 16).
+prop(121, 203, eTime, 17).
 prop(121, 203, building, "Woodward").
 prop(121, 203, room, 6).
 
@@ -399,4 +450,3 @@ prop(320, 202, sTime, 8:00).
 prop(320, 202, eTime, 9:00).
 prop(320, 202, building, "Hennings").
 prop(320, 202, room, 200).
-
