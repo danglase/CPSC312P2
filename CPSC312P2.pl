@@ -6,14 +6,14 @@
 
 %
 % Course Information Database
-% Course(number, name, section, term, instructor, date, start time, end time, building, room, prereq)
+% Course(number, name, type, prereq, section, term, instructor, days, start time, end time, building, room)
+% Types can include: ai, core, internet, graphics, etc.
 %
 % Problems:
 % Issue with courses that are in different buildings each day
 %
 % Courses with more than one section won't be able to show which prof teachers which section
-% possible solution:
-% prop(course, section, _, _).
+% possible solution: prop(course, section, _, _). <-- will be using this
 %
 
 % course 110
@@ -400,3 +400,67 @@ prop(320, 202, eTime, 9:00).
 prop(320, 202, building, "Hennings").
 prop(320, 202, room, 200).
 
+
+% course 322
+prop(322, _, course, 322).
+prop(322, _, name, "Introduction to Artificial Intelligence").
+% artificial
+prop(322, _, type, ai).
+% Pre-reqs: Either (a) CPSC 221 or (b) all of CPSC 260, EECE 320 and one of CPSC 210, EECE 210, EECE 309.
+% will use (a) for simplicity
+prop(322, _, prereq, 221).
+
+% section 101
+prop(322, 101, term, 1).
+prop(322, 101, instructor, "Jordan Johnson").
+prop(322, 101, day, tth).
+prop(322, 101, sTime, 17:00).
+prop(322, 101, eTime, 18:30).
+prop(322, 101, building, "Pharmaceutical Sciences Building").
+prop(322, 101, room, 1201).
+
+% section 201
+prop(322, 201, term, 2).
+prop(322, 201, instructor, "TBA").
+prop(322, 201, day, tth).
+prop(322, 201, sTime, 9:30).
+prop(322, 201, eTime, 11:00).
+prop(322, 201, building, "Hugh Dempster Pavilion").
+prop(322, 201, room, 310).
+
+
+% course 340
+prop(340, _, course, 340).
+prop(340, _, name, "Machine Learning and Data Mining").
+% artificial
+prop(340, _, type, ai).
+% Pre-reqs: One of MATH 152, MATH 221, MATH 223 and one of MATH 200, MATH 217, MATH 226, MATH 253, MATH 263 and one of STAT 200, STAT 203, STAT 241, STAT 251, COMM 291, ECON 325, ECON 327, PSYC 218, PSYC 278, PSYC 366, MATH 302, STAT 302, MATH 318, BIOL 300; and either (a) CPSC 221 or (b) all of CPSC 260, EECE 320 and one of CPSC 210, EECE 210, EECE 309.
+% will just use cpsc 221 for simplicity
+prop(340, _, prereq, 221).
+
+% section 101
+prop(340, 101, term, 1).
+prop(340, 101, instructor, "Mark Schmidt").
+prop(340, 101, day, mwf).
+prop(340, 101, sTime, 16:00).
+prop(340, 101, eTime, 17:00).
+prop(340, 101, building, "MacMillan").
+prop(340, 101, room, 166).
+
+% section 103
+prop(340, 103, term, 1).
+prop(340, 103, instructor, "Michael Gelbart").
+prop(340, 103, day, mwf).
+prop(340, 103, sTime, 12:00).
+prop(340, 103, eTime, 13:00).
+prop(340, 103, building, "Hugh Dempster Pavilion").
+prop(340, 103, room, 110).
+
+% section 201
+prop(340, 201, term, 2).
+prop(340, 201, instructor, "Frank Wood").
+prop(340, 201, day, mwf).
+prop(340, 201, sTime, 13:00).
+prop(340, 201, eTime, 14:00).
+prop(340, 201, building, "MacMillan").
+prop(340, 201, room, 166).
