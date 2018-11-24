@@ -1,13 +1,142 @@
 % Course Schedule Bot
 % Authors: Reed Esler, Dan Glaser
 
+:-style_check(-discontiguous).
+
+%
+% Start of the bot
+%
+
+ask() :-
+    write("What would you like to do?\n"),
+    write('1. When is a course offered?\n'),
+    write('2. Who teaches a specific course?\n'),
+    write('3. Can I take two specific courses at the same time?\n'),
+    write('4. What are the prerequisites of a course?\n'),
+    write('5. What course should I take?\n'),
+    read(Input),
+    query(Input).
+
+%
+% 1. When is a course offered?
+%
+query(Input) :-
+    Input = 1,
+    write('What class?'),
+    read(Class),
+    daysOffered(Class).
+
+daysOffered(X) :-
+    findall(D, prop(X, _, day, D), R),
+    sort(R, R),
+    write(R).
+    write("\n\n"),
+    ask().
+
+%
+% 2. Who teaches a specific course?
+%
+query(Input) :-
+    Input = 2,
+    write('What class?'),
+    read(Class),
+    write('Specific section? (Type section number, or N for all sections)'),
+    read(Section),
+    findTeacher(Class, Section).
+
+findTeacher(X, Y) :-
+    Y = "N",
+    findall(T, prop(X, _, instructor, T), R),
+    write(R),
+    write("\n\n"),
+    ask().
+
+findTeacher(X, Y) :-
+    findall(T, prop(X, Y, instructor, T), R),
+    write(R),
+    write("\n\n"),
+    ask().
+
+%
+% 3. Can I take two specific courses at the same time?
+%
+
+
+%
+% 4. What are the prerequisites of a course?
+%
+query(Input) :-
+    Input = 4,
+    write('What class?'),
+    read(Class),
+    findPreReqs(Class).
+
+findPreReqs(X) :-
+    findall(P, prop(X, _, prereq, P), R),
+    write(R),
+    write("\n\n"),
+    ask().
+
+
+
+compatableSections(Course1, Sec1, Course2, Sec2) :-
+  prop(Course1, Sec1, day, Day1),
+  prop(Course2, Sec2, day, Day2),
+  Day1 \= Day2.
+
+compatableSections(Course1, Sec1, Course2, Sec2) :-
+  prop(Course1, Sec1, sTime, Stime1),
+  prop(Course1, Sec1, eTime, Etime1),
+  prop(Course2, Sec2, sTime, Stime2),
+  prop(Course2, Sec2, eTime, Etime2),
+  (
+    Etime1 < Stime2;
+    Stime1 > Etime2
+  ).
+
+
+
+prop(test1, 101, sTime, 11).
+prop(test1, 101, eTime, 12).
+prop(test1, 101, day, mwf).
+
+prop(test2, 101, sTime, 14).
+prop(test2, 101, eTime, 15).
+prop(test2, 101, day, mwf).
+
+prop(test3, 101, sTime, 8).
+prop(test3, 101, eTime, 9).
+prop(test3, 101, day, mwf).
+
+% compatableSections(test1, 101, test2, 101). % should be true
+% compatableSections(test1, 101, test3, 101). % should be true
+
+prop(test4, 101, sTime, 10).
+prop(test4, 101, eTime, 11.5).
+prop(test4, 101, day, mwf).
+
+% compatableSections(test1, 101, test4, 101). % should be false
+
+prop(test5, 101, sTime, 11.5).
+prop(test5, 101, eTime, 13).
+prop(test5, 101, day, mwf).
+
+% compatableSections(test1, 101, test5, 101). % should be false
+
+prop(test6, 101, sTime, 11.5).
+prop(test6, 101, eTime, 13).
+prop(test6, 101, day, tth).
+
+% compatableSections(test1, 101, test6, 101). % should be true
+
+
 
 
 
 %
 % Course Information Database
 % Course(number, name, type, prereq, section, term, instructor, days, start time, end time, building, room)
-% Types can include: ai, core, internet, graphics, etc.
+% Types can include: ai, fundamental, internet, graphics, etc.
 %
 % Problems:
 % Issue with courses that are in different buildings each day
@@ -19,14 +148,16 @@
 % course 110
 prop(110, _, course, 110).
 prop(110, _, name, "Computation, Programs and Programming").
+% fundamental
+prop(340, _, type, "fundamental").
 prop(110, _, prereq, none).
 
 % section 101
 prop(110, 101, term, 1).
 prop(110, 101, instructor, "Gregor Kiczales").
 prop(110, 101, day, tth).
-prop(110, 101, sTime, "12:30").
-prop(110, 101, eTime, "14:00").
+prop(110, 101, sTime, 12.5).
+prop(110, 101, eTime, 14).
 prop(110, 101, building, "Woodward").
 prop(110, 101, room, 2).
 
@@ -34,8 +165,8 @@ prop(110, 101, room, 2).
 prop(110, 103, term, 1).
 prop(110, 103, instructor, "Oluwakemi Ola").
 prop(110, 103, day, mwf).
-prop(110, 103, sTime, "16:00").
-prop(110, 103, eTime, "17:00").
+prop(110, 103, sTime, 16).
+prop(110, 103, eTime, 17).
 prop(110, 103, building, "Wesbrook").
 prop(110, 103, room, 100).
 
@@ -43,8 +174,8 @@ prop(110, 103, room, 100).
 prop(110, 201, term, 2).
 prop(110, 201, instructor, "Anthony Estey").
 prop(110, 201, day, tth).
-prop(110, 201, sTime, "15:30").
-prop(110, 201, eTime, "17:00").
+prop(110, 201, sTime, 15.5).
+prop(110, 201, eTime, 17).
 prop(110, 201, building, "Neville Scarfe").
 prop(110, 201, room, 100).
 
@@ -52,8 +183,8 @@ prop(110, 201, room, 100).
 prop(110, 202, term, 2).
 prop(110, 202, instructor, "Oluwakemi Ola").
 prop(110, 202, day, mwf).
-prop(110, 202, sTime, "15:00").
-prop(110, 202, eTime, "16:00").
+prop(110, 202, sTime, 15).
+prop(110, 202, eTime, 16).
 prop(110, 202, building, "Forest Sciences Centre").
 prop(110, 202, room, 1005).
 
@@ -61,8 +192,8 @@ prop(110, 202, room, 1005).
 prop(110, 203, term, 2).
 prop(110, 203, instructor, "Anthony Estey").
 prop(110, 203, day, tth).
-prop(110, 203, sTime, "9:30").
-prop(110, 203, eTime, "11:00").
+prop(110, 203, sTime, 9.5).
+prop(110, 203, eTime, 11).
 prop(110, 203, building, "Chemical and Biological Engineering Building").
 prop(110, 203, room, 101).
 
@@ -70,14 +201,16 @@ prop(110, 203, room, 101).
 % course 121
 prop(121, _, course, 121).
 prop(121, _, name, "Models of Computation").
+% fundamental
+prop(340, _, type, "fundamental").
 prop(121, _, prereq, none).
 
 % section 101
 prop(121, 101, term, 1).
 prop(121, 101, instructor, "Patrice Belleville").
 prop(121, 101, day, tth).
-prop(121, 101, sTime, 9:30).
-prop(121, 101, eTime, 11:00).
+prop(121, 101, sTime, 9.5).
+prop(121, 101, eTime, 11).
 prop(121, 101, building, "Pharmaceutical Sciences Building").
 prop(121, 101, room, 1201).
 
@@ -85,8 +218,8 @@ prop(121, 101, room, 1201).
 prop(121, 102, term, 1).
 prop(121, 102, instructor, "Frederick Shepherd").
 prop(121, 102, day, tth).
-prop(121, 102, sTime, 15:30).
-prop(121, 102, eTime, 17:00).
+prop(121, 102, sTime, 15.5).
+prop(121, 102, eTime, 17).
 prop(121, 102, building, "Hugh Dempster Pavilion").
 prop(121, 102, room, 310).
 
@@ -94,8 +227,8 @@ prop(121, 102, room, 310).
 prop(121, 103, term, 1).
 prop(121, 103, instructor, "Cinda Heeren").
 prop(121, 103, day, tth).
-prop(121, 103, sTime, 17:00).
-prop(121, 103, eTime, 18:30).
+prop(121, 103, sTime, 17).
+prop(121, 103, eTime, 18.5).
 prop(121, 103, building, "Hugh Dempster Pavilion").
 prop(121, 103, room, 310).
 
@@ -103,8 +236,8 @@ prop(121, 103, room, 310).
 prop(121, 201, term, 2).
 prop(121, 201, instructor, "Cinda Heeren").
 prop(121, 201, day, mwf).
-prop(121, 201, sTime, 9:00).
-prop(121, 201, eTime, 10:00).
+prop(121, 201, sTime, 9).
+prop(121, 201, eTime, 10).
 prop(121, 201, building, "West Mall Swing Space").
 prop(121, 201, room, 121).
 
@@ -112,8 +245,8 @@ prop(121, 201, room, 121).
 prop(121, 202, term, 2).
 prop(121, 202, instructor, "Patrice Belleville").
 prop(121, 202, day, mwf).
-prop(121, 202, sTime, 12:00).
-prop(121, 202, eTime, 13:00).
+prop(121, 202, sTime, 12).
+prop(121, 202, eTime, 13).
 prop(121, 202, building, "MacMillan").
 prop(121, 202, room, 166).
 
@@ -121,8 +254,8 @@ prop(121, 202, room, 166).
 prop(121, 203, term, 2).
 prop(121, 203, instructor, "Patrice Belleville").
 prop(121, 203, day, mwf).
-prop(121, 203, sTime, 16:00).
-prop(121, 203, eTime, 17:00).
+prop(121, 203, sTime, 16).
+prop(121, 203, eTime, 17).
 prop(121, 203, building, "Woodward").
 prop(121, 203, room, 6).
 
@@ -130,6 +263,8 @@ prop(121, 203, room, 6).
 % course 210
 prop(210, _, course, 210).
 prop(210, _, name, "Software Construction").
+% fundamental
+prop(340, _, type, "fundamental").
 % Pre-reqs: One of CPSC 107, CPSC 110, CPSC 260.
 % Will use 110 as the prereq as a place holder.
 prop(210, _, prereq, 110).
@@ -192,6 +327,8 @@ prop(210, 203, room, 222).
 % course 213
 prop(213, _, course, 213).
 prop(213, _, name, "Introduction to Computer Systems").
+% fundamental
+prop(340, _, type, "fundamental").
 % Pre-reqs: All of CPSC 121, CPSC 210.
 prop(213, _, prereq, 121).
 prop(213, _, prereq, 210).
@@ -236,6 +373,8 @@ prop(213, 204, room, 310).
 % course 221
 prop(221, _, course, 221).
 prop(221, _, name, "Basic Algorithms and Data Structures").
+% fundamental
+prop(340, _, type, "fundamental").
 % Pre-reqs: One of CPSC 210, EECE 210, CPEN 221 and one of CPSC 121, MATH 220.
 % We will only use cpsc prereqs for simplicity
 prop(221, _, prereq, 210).
@@ -290,6 +429,8 @@ prop(221, 203, room, 1101).
 % course 310
 prop(310, _, course, 310).
 prop(310, _, name, "Introduction to Software Engineering").
+% fundamental
+prop(340, _, type, "fundamental").
 % Pre-reqs: CPSC 210.
 prop(310, _, prereq, 210).
 
@@ -324,6 +465,8 @@ prop(310, 201, room, 310).
 % course 313
 prop(313, _, course, 313).
 prop(313, _, name, "Computer Hardware and Operating Systems").
+% fundamental
+prop(340, _, type, "fundamental").
 % Pre-reqs: Either (a) all of CPSC 213, CPSC 221 or (b) all of CPSC 210, CPSC 213, CPSC 260, EECE 320.
 % will use case (a) for simplicity
 prop(313, _, prereq, 213).
@@ -360,6 +503,8 @@ prop(313, 204, room, 153).
 % course 320
 prop(320, _, course, 320).
 prop(320, _, name, "Intermediate Algorithm Design and Analysis").
+% fundamental
+prop(340, _, type, "fundamental").
 % Pre-reqs: Either (a) CPSC 221 or (b) all of CPSC 260, EECE 320. (In addition to above pre-requisites, at least 3 credits from COMM 291, BIOL 300, MATH or STAT at 200 level or above.)
 % will use case (a) for simplicity
 prop(320, _, prereq, 221).
