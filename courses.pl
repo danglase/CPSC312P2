@@ -14,6 +14,7 @@ ask() :-
     write('3. Can I take two specific courses at the same time?\n'),
     write('4. What are the prerequisites of a course?\n'),
     write('5. What course should I take?\n'),
+    write('6. Other\n'),
     read(Input),
     query(Input).
 
@@ -24,9 +25,9 @@ query(Input) :-
     Input = 1,
     write('What class?'),
     read(Class),
-    daysOffered(Class).
+    offered(Class).
 
-daysOffered(X) :-
+offered(X) :-
     findall(D, prop(X, _, day, D), R),
     sort(R, R),
     write(R).
@@ -60,7 +61,67 @@ findTeacher(X, Y) :-
 %
 % 3. Can I take two specific courses at the same time?
 %
+query(Input) :-
+    Input = 3,
+    write('What is the first class?'),
+    read(ClassOne),
+    write('What is the second class?'),
+    read(ClassTwo),
+    compatableSections(ClassOne, X, ClassTwo, Y).
 
+compatableSections(Course1, Sec1, Course2, Sec2) :-
+    prop(Course1, Sec1, sTime, Stime1),
+    prop(Course1, Sec1, eTime, Etime1),
+    prop(Course2, Sec2, sTime, Stime2),
+    prop(Course2, Sec2, eTime, Etime2),
+    (
+        Stime1 > Etime2;
+        Stime2 > Etime1
+    ),
+    write("Yes, you can take these two courses as CPSC "),
+    write(Course1),
+    write(" Sec: "),
+    write(Sec1),
+    write(" and CPSC "),
+    write(Course2),
+    write(" Sec: "),
+    write(Sec2),
+    write(" are at different times on the same day.").
+
+compatableSections(Course1, Sec1, Course2, Sec2) :-
+    prop(Course1, Sec1, day, Day1),
+    prop(Course2, Sec2, day, Day2),
+    Day1 \= Day2,
+    write("Yes, you can take these two courses as CPSC "),
+    write(Course1),
+    write(" Sec: "),
+    write(Sec1),
+    write(" and CPSC "),
+    write(Course2),
+    write(" Sec: "),
+    write(Sec2),
+    write(" are on different days.").
+
+compatableSections(Course1, Sec1, Course2, Sex2) :-
+    prop(Course1, Sec1, term, Term1),
+    prop(Course2, Sec2, term, Term2),
+    Term1 \= Term2,
+    write("Yes, you can take these two courses as CPSC "),
+    write(Course1),
+    write(" Sec: "),
+    write(Sec1),
+    write(" and CPSC "),
+    write(Course2),
+    write(" Sec: "),
+    write(Sec2),
+    write(" are in different terms.").
+
+compatableSections(Course1, Sec1, Course2, Sec2) :-
+    write("Unfortunately you are not able to take the courses CPSC "),
+    write(Course1),
+    write(" and CPSC "),
+    write(Course2),
+    write(" at the same time as either the schedules overlap, or at least one of the courses do not exist.").
 
 %
 % 4. What are the prerequisites of a course?
@@ -77,23 +138,24 @@ findPreReqs(X) :-
     write("\n\n"),
     ask().
 
+%
+% 5. What course should I take?
+%
+query(Input) :-
+    Input = 5,
+    write('Which field are you interested in?\n'),
+    write('1. Fundamentals\n'),
+    write('2. Internet Programming\n'),
+    write('3. Computer Graphics\n'),
+    write('4. Artificial Intelligence\n'),
+    write('5. Ethics\n'),
+    read(In),
+    finder(In).
 
 
-compatableSections(Course1, Sec1, Course2, Sec2) :-
-  prop(Course1, Sec1, day, Day1),
-  prop(Course2, Sec2, day, Day2),
-  Day1 \= Day2.
-
-compatableSections(Course1, Sec1, Course2, Sec2) :-
-  prop(Course1, Sec1, sTime, Stime1),
-  prop(Course1, Sec1, eTime, Etime1),
-  prop(Course2, Sec2, sTime, Stime2),
-  prop(Course2, Sec2, eTime, Etime2),
-  (
-    Etime1 < Stime2;
-    Stime1 > Etime2
-  ).
-
+%
+% 6. Other
+%
 
 
 prop(test1, 101, sTime, 11).
