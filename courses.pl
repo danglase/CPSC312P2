@@ -28,6 +28,9 @@ query(Input) :-
     offered(Class).
 
 offered(X) :-
+    write("CPSC "),
+    write(X),
+    write(" is offered at these times: "),
     findall(D, prop(X, _, day, D), R),
     sort(R, R),
     write(R).
