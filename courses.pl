@@ -9,12 +9,12 @@
 
 ask() :-
     write("What would you like to do?\n"),
-    write('1. When is a course offered?\n'),
-    write('2. Who teaches a specific course?\n'),
-    write('3. Can I take two specific courses at the same time?\n'),
-    write('4. What are the prerequisites of a course?\n'),
-    write('5. What course should I take?\n'),
-    write('6. Other\n'),
+    write("1. When is a course offered?\n"),
+    write("2. Who teaches a specific course?\n"),
+    write("3. Can I take two specific courses at the same time?\n"),
+    write("4. What are the prerequisites of a course?\n"),
+    write("5. What course should I take?\n"),
+    write("6. Other\n"),
     read(Input),
     query(Input).
 
@@ -23,7 +23,7 @@ ask() :-
 %
 query(Input) :-
     Input = 1,
-    write('What class?'),
+    write("What class?"),
     read(Class),
     offered(Class).
 
@@ -32,7 +32,6 @@ offered(X) :-
     write(X),
     write(" is offered at these times: "),
     findall(D, prop(X, _, day, D), R),
-    sort(R, R),
     write(R).
     write("\n\n"),
     ask().
@@ -42,21 +41,27 @@ offered(X) :-
 %
 query(Input) :-
     Input = 2,
-    write('What class?'),
+    write("What class?"),
     read(Class),
-    write('Specific section? (Type section number, or N for all sections)'),
+    write("Specific section? (Type section number, or N for all sections)"),
     read(Section),
     findTeacher(Class, Section).
 
 findTeacher(X, Y) :-
     Y = "N",
     findall(T, prop(X, _, instructor, T), R),
+    write("The professors for CPSC "),
+    write(X),
+    write(" are: "),
     write(R),
     write("\n\n"),
     ask().
 
 findTeacher(X, Y) :-
     findall(T, prop(X, Y, instructor, T), R),
+    write("The professor for CPSC "),
+    write(X),
+    write(" is "),
     write(R),
     write("\n\n"),
     ask().
@@ -66,9 +71,9 @@ findTeacher(X, Y) :-
 %
 query(Input) :-
     Input = 3,
-    write('What is the first class?'),
+    write("What is the first class?"),
     read(ClassOne),
-    write('What is the second class?'),
+    write("What is the second class?"),
     read(ClassTwo),
     compatableSections(ClassOne, X, ClassTwo, Y).
 
@@ -81,7 +86,7 @@ compatableSections(Course1, Sec1, Course2, Sec2) :-
         Stime1 > Etime2;
         Stime2 > Etime1
     ),
-    write("Yes, you can take these two courses as CPSC "),
+    write("Yes, you can take these two courses, as CPSC "),
     write(Course1),
     write(" Sec: "),
     write(Sec1),
@@ -89,13 +94,14 @@ compatableSections(Course1, Sec1, Course2, Sec2) :-
     write(Course2),
     write(" Sec: "),
     write(Sec2),
-    write(" are at different times on the same day.").
+    write(" are at different times on the same day.\n\n"),
+    ask().
 
 compatableSections(Course1, Sec1, Course2, Sec2) :-
     prop(Course1, Sec1, day, Day1),
     prop(Course2, Sec2, day, Day2),
     Day1 \= Day2,
-    write("Yes, you can take these two courses as CPSC "),
+    write("Yes, you can take these two courses, as CPSC "),
     write(Course1),
     write(" Sec: "),
     write(Sec1),
@@ -103,13 +109,14 @@ compatableSections(Course1, Sec1, Course2, Sec2) :-
     write(Course2),
     write(" Sec: "),
     write(Sec2),
-    write(" are on different days.").
+    write(" are on different days.\n\n"),
+    ask().
 
 compatableSections(Course1, Sec1, Course2, Sex2) :-
     prop(Course1, Sec1, term, Term1),
     prop(Course2, Sec2, term, Term2),
     Term1 \= Term2,
-    write("Yes, you can take these two courses as CPSC "),
+    write("Yes, you can take these two courses, as CPSC "),
     write(Course1),
     write(" Sec: "),
     write(Sec1),
@@ -117,26 +124,31 @@ compatableSections(Course1, Sec1, Course2, Sex2) :-
     write(Course2),
     write(" Sec: "),
     write(Sec2),
-    write(" are in different terms.").
+    write(" are in different terms.\n\n"),
+    ask().
 
 compatableSections(Course1, Sec1, Course2, Sec2) :-
     write("Unfortunately you are not able to take the courses CPSC "),
     write(Course1),
     write(" and CPSC "),
     write(Course2),
-    write(" at the same time as either the schedules overlap, or at least one of the courses do not exist.").
+    write(" at the same time as either the schedules overlap, or at least one of the courses do not exist.\n\n"),
+    ask().
 
 %
 % 4. What are the prerequisites of a course?
 %
 query(Input) :-
     Input = 4,
-    write('What class?'),
+    write("What class?"),
     read(Class),
     findPreReqs(Class).
 
 findPreReqs(X) :-
     findall(P, prop(X, _, prereq, P), R),
+    write("The prerequisites for CPSC "),
+    write(X),
+    write(" are: "),
     write(R),
     write("\n\n"),
     ask().
@@ -146,15 +158,70 @@ findPreReqs(X) :-
 %
 query(Input) :-
     Input = 5,
-    write('Which field are you interested in?\n'),
-    write('1. Fundamentals\n'),
-    write('2. Internet Programming\n'),
-    write('3. Computer Graphics\n'),
-    write('4. Artificial Intelligence\n'),
-    write('5. Ethics\n'),
+    write("Which field are you interested in?\n"),
+    write("1. Fundamentals\n"),
+    write("2. Internet Programming\n"),
+    write("3. Computer Graphics\n"),
+    write("4. Artificial Intelligence\n"),
+    write("5. Ethics\n"),
     read(In),
-    finder(In).
+    write("What is the highest course you have taken in this field? (N for none)\n"),
+    read(High),
+    fields(In, High).
 
+fields(In, High) :-
+    In = 1,
+    find_field("fundamental", High).
+fields(In, High) :-
+    In = 2,
+    find_field("internet", High).
+fields(In, High) :-
+    In = 3,
+    find_field("graphics", High).
+fields(In, High) :-
+    In = 4,
+    find_field("ai", High).
+fields(In, High) :-
+    In = 5,
+    find_field("ethics", High).
+
+find_field(In, High) :-
+    High = "N",
+    write("You should start with CPSC "),
+    findall(C, prop(C, _, type, In), R),
+    list_min(R, Min),
+    write(Min),
+    write("\n\n").
+
+find_field(In, High) :-
+    findall(C, prop(C, _, type, In), R),
+    filter(High, R, Z),
+    list_min(Z, Min),
+    write("The next course in the field of "),
+    write(In),
+    write(" is CPSC "),
+    write(Min),
+    write("\n\n").
+
+% Not working currently
+find_field(In, High) :-
+    findall(C, prop(C, _, type, In), R),
+    filter(High, R, Z),
+    list_min(Z, Min),
+    write("There are not anymore higher level courses in the field of "),
+    write(In),
+    write(".\n\n").
+
+filter(N, Y, Z) :-
+    findall(X, (member(X, Y), X > N), Z).
+
+list_min([Min], Min).
+list_min([H0, H1|T], Min) :-
+    H0 =< H1,
+    list_min([H0|T], Min).
+list_min([H0, H1|T], Min) :-
+    H0 > H1,
+    list_min([H1|T], Min).
 
 %
 % 6. Other
@@ -214,7 +281,7 @@ prop(test6, 101, day, tth).
 prop(110, _, course, 110).
 prop(110, _, name, "Computation, Programs and Programming").
 % fundamental
-prop(340, _, type, "fundamental").
+prop(110, _, type, "fundamental").
 prop(110, _, prereq, none).
 
 % section 101
@@ -267,7 +334,7 @@ prop(110, 203, room, 101).
 prop(121, _, course, 121).
 prop(121, _, name, "Models of Computation").
 % fundamental
-prop(340, _, type, "fundamental").
+prop(121, _, type, "fundamental").
 prop(121, _, prereq, none).
 
 % section 101
@@ -329,7 +396,7 @@ prop(121, 203, room, 6).
 prop(210, _, course, 210).
 prop(210, _, name, "Software Construction").
 % fundamental
-prop(340, _, type, "fundamental").
+prop(210, _, type, "fundamental").
 % Pre-reqs: One of CPSC 107, CPSC 110, CPSC 260.
 % Will use 110 as the prereq as a place holder.
 prop(210, _, prereq, 110).
@@ -393,7 +460,7 @@ prop(210, 203, room, 222).
 prop(213, _, course, 213).
 prop(213, _, name, "Introduction to Computer Systems").
 % fundamental
-prop(340, _, type, "fundamental").
+prop(213, _, type, "fundamental").
 % Pre-reqs: All of CPSC 121, CPSC 210.
 prop(213, _, prereq, 121).
 prop(213, _, prereq, 210).
@@ -439,7 +506,7 @@ prop(213, 204, room, 310).
 prop(221, _, course, 221).
 prop(221, _, name, "Basic Algorithms and Data Structures").
 % fundamental
-prop(340, _, type, "fundamental").
+prop(221, _, type, "fundamental").
 % Pre-reqs: One of CPSC 210, EECE 210, CPEN 221 and one of CPSC 121, MATH 220.
 % We will only use cpsc prereqs for simplicity
 prop(221, _, prereq, 210).
@@ -495,7 +562,7 @@ prop(221, 203, room, 1101).
 prop(310, _, course, 310).
 prop(310, _, name, "Introduction to Software Engineering").
 % fundamental
-prop(340, _, type, "fundamental").
+prop(310, _, type, "fundamental").
 % Pre-reqs: CPSC 210.
 prop(310, _, prereq, 210).
 
@@ -531,7 +598,7 @@ prop(310, 201, room, 310).
 prop(313, _, course, 313).
 prop(313, _, name, "Computer Hardware and Operating Systems").
 % fundamental
-prop(340, _, type, "fundamental").
+prop(313, _, type, "fundamental").
 % Pre-reqs: Either (a) all of CPSC 213, CPSC 221 or (b) all of CPSC 210, CPSC 213, CPSC 260, EECE 320.
 % will use case (a) for simplicity
 prop(313, _, prereq, 213).
@@ -569,7 +636,7 @@ prop(313, 204, room, 153).
 prop(320, _, course, 320).
 prop(320, _, name, "Intermediate Algorithm Design and Analysis").
 % fundamental
-prop(340, _, type, "fundamental").
+prop(320, _, type, "fundamental").
 % Pre-reqs: Either (a) CPSC 221 or (b) all of CPSC 260, EECE 320. (In addition to above pre-requisites, at least 3 credits from COMM 291, BIOL 300, MATH or STAT at 200 level or above.)
 % will use case (a) for simplicity
 prop(320, _, prereq, 221).
@@ -615,7 +682,7 @@ prop(320, 202, room, 200).
 prop(322, _, course, 322).
 prop(322, _, name, "Introduction to Artificial Intelligence").
 % artificial
-prop(322, _, type, ai).
+prop(322, _, type, "ai").
 % Pre-reqs: Either (a) CPSC 221 or (b) all of CPSC 260, EECE 320 and one of CPSC 210, EECE 210, EECE 309.
 % will use (a) for simplicity
 prop(322, _, prereq, 221).
@@ -643,7 +710,7 @@ prop(322, 201, room, 310).
 prop(340, _, course, 340).
 prop(340, _, name, "Machine Learning and Data Mining").
 % artificial
-prop(340, _, type, ai).
+prop(340, _, type, "ai").
 % Pre-reqs: One of MATH 152, MATH 221, MATH 223 and one of MATH 200, MATH 217, MATH 226, MATH 253, MATH 263 and one of STAT 200, STAT 203, STAT 241, STAT 251, COMM 291, ECON 325, ECON 327, PSYC 218, PSYC 278, PSYC 366, MATH 302, STAT 302, MATH 318, BIOL 300; and either (a) CPSC 221 or (b) all of CPSC 260, EECE 320 and one of CPSC 210, EECE 210, EECE 309.
 % will just use cpsc 221 for simplicity
 prop(340, _, prereq, 221).
