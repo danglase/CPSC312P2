@@ -32,7 +32,7 @@ offered(X) :-
     write(X),
     write(" is offered at these times: "),
     findall(D, prop(X, _, day, D), R),
-    write(R).
+    write(R),
     write("\n\n"),
     ask().
 
@@ -75,7 +75,7 @@ query(Input) :-
     read(ClassOne),
     write("What is the second class?"),
     read(ClassTwo),
-    compatableSections(ClassOne, X, ClassTwo, Y).
+    compatableSections(ClassOne, _, ClassTwo, _).
 
 compatableSections(Course1, Sec1, Course2, Sec2) :-
     prop(Course1, Sec1, sTime, Stime1),
@@ -112,7 +112,7 @@ compatableSections(Course1, Sec1, Course2, Sec2) :-
     write(" are on different days.\n\n"),
     ask().
 
-compatableSections(Course1, Sec1, Course2, Sex2) :-
+compatableSections(Course1, Sec1, Course2, Sec2) :-
     prop(Course1, Sec1, term, Term1),
     prop(Course2, Sec2, term, Term2),
     Term1 \= Term2,
@@ -127,7 +127,7 @@ compatableSections(Course1, Sec1, Course2, Sex2) :-
     write(" are in different terms.\n\n"),
     ask().
 
-compatableSections(Course1, Sec1, Course2, Sec2) :-
+compatableSections(Course1, _, Course2, _) :-
     write("Unfortunately you are not able to take the courses CPSC "),
     write(Course1),
     write(" and CPSC "),
@@ -204,16 +204,19 @@ find_field(In, High) :-
     write("\n\n").
 
 % Not working currently
-find_field(In, High) :-
-    findall(C, prop(C, _, type, In), R),
-    filter(High, R, Z),
-    list_min(Z, Min),
-    write("There are not anymore higher level courses in the field of "),
-    write(In),
-    write(".\n\n").
+% find_field(In, High) :-
+%     findall(C, prop(C, _, type, In), R),
+%     filter(High, R, Z),
+%     list_min(Z, Min),
+%     write("There are not anymore higher level courses in the field of "),
+%     write(In),
+%     write(".\n\n").
 
 filter(N, Y, Z) :-
     findall(X, (member(X, Y), X > N), Z).
+
+filter(_, [], _) :-
+    write("error").
 
 list_min([Min], Min).
 list_min([H0, H1|T], Min) :-
