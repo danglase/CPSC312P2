@@ -2,6 +2,7 @@
 % Authors: Reed Esler, Dan Glaser
 
 :-style_check(-discontiguous).
+ :-  dynamic  lookup/2.
 
 %
 % Start of the bot
@@ -75,17 +76,11 @@ query(Input) :-
     read(ClassOne),
     write("What is the second class?"),
     read(ClassTwo),
-    compatableSections(ClassOne, _, ClassTwo, _).
+    printCompatableSections(ClassOne, _, ClassTwo, _),
+    ask().
 
-compatableSections(Course1, Sec1, Course2, Sec2) :-
-    prop(Course1, Sec1, sTime, Stime1),
-    prop(Course1, Sec1, eTime, Etime1),
-    prop(Course2, Sec2, sTime, Stime2),
-    prop(Course2, Sec2, eTime, Etime2),
-    (
-        Stime1 > Etime2;
-        Stime2 > Etime1
-    ),
+printCompatableSections(Course1, Sec1, Course2, Sec2) :-
+    differentTerms(Course1, Sec1, Course2, Sec2),
     write("Yes, you can take these two courses, as CPSC "),
     write(Course1),
     write(" Sec: "),
@@ -94,13 +89,10 @@ compatableSections(Course1, Sec1, Course2, Sec2) :-
     write(Course2),
     write(" Sec: "),
     write(Sec2),
-    write(" are at different times on the same day.\n\n"),
-    ask().
+    write(" are in different terms.\n\n").
 
-compatableSections(Course1, Sec1, Course2, Sec2) :-
-    prop(Course1, Sec1, day, Day1),
-    prop(Course2, Sec2, day, Day2),
-    Day1 \= Day2,
+printCompatableSections(Course1, Sec1, Course2, Sec2) :-
+    differentDays(Course1, Sec1, Course2, Sec2),
     write("Yes, you can take these two courses, as CPSC "),
     write(Course1),
     write(" Sec: "),
@@ -109,13 +101,10 @@ compatableSections(Course1, Sec1, Course2, Sec2) :-
     write(Course2),
     write(" Sec: "),
     write(Sec2),
-    write(" are on different days.\n\n"),
-    ask().
+    write(" are on different days.\n\n").
 
-compatableSections(Course1, Sec1, Course2, Sec2) :-
-    prop(Course1, Sec1, term, Term1),
-    prop(Course2, Sec2, term, Term2),
-    Term1 \= Term2,
+printCompatableSections(Course1, Sec1, Course2, Sec2) :-
+    differentTimes(Course1, Sec1, Course2, Sec2),
     write("Yes, you can take these two courses, as CPSC "),
     write(Course1),
     write(" Sec: "),
@@ -124,16 +113,47 @@ compatableSections(Course1, Sec1, Course2, Sec2) :-
     write(Course2),
     write(" Sec: "),
     write(Sec2),
-    write(" are in different terms.\n\n"),
-    ask().
+    write(" are at different times on the same day.\n\n").
 
-compatableSections(Course1, _, Course2, _) :-
+printCompatableSections(Course1, _, Course2, _) :-
     write("Unfortunately you are not able to take the courses CPSC "),
     write(Course1),
     write(" and CPSC "),
     write(Course2),
     write(" at the same time as either the schedules overlap, or at least one of the courses do not exist.\n\n"),
     ask().
+
+compatableSections(Course1, Sec1, Course2, Sec2) :-
+    differentTerms(Course1, Sec1, Course2, Sec2).
+
+compatableSections(Course1, Sec1, Course2, Sec2) :-
+    \+ differentTerms(Course1, Sec1, Course2, Sec2),
+    differentDays(Course1, Sec1, Course2, Sec2).
+
+compatableSections(Course1, Sec1, Course2, Sec2) :-
+    \+ differentTerms(Course1, Sec1, Course2, Sec2),
+    \+ differentDays(Course1, Sec1, Course2, Sec2),
+    differentTimes(Course1, Sec1, Course2, Sec2).
+
+differentTerms(Course1, Sec1, Course2, Sec2) :-
+    prop(Course1, Sec1, term, Term1),
+    prop(Course2, Sec2, term, Term2),
+    Term1 \= Term2.
+
+differentDays(Course1, Sec1, Course2, Sec2) :-
+    prop(Course1, Sec1, day, Day1),
+    prop(Course2, Sec2, day, Day2),
+    Day1 \= Day2.
+
+differentTimes(Course1, Sec1, Course2, Sec2) :-
+    prop(Course1, Sec1, sTime, Stime1),
+    prop(Course1, Sec1, eTime, Etime1),
+    prop(Course2, Sec2, sTime, Stime2),
+    prop(Course2, Sec2, eTime, Etime2),
+    (
+        Stime1 >= Etime2;
+        Stime2 >= Etime1
+    ).
 
 %
 % 4. What are the prerequisites of a course?
@@ -235,9 +255,17 @@ prop(test1, 101, sTime, 11).
 prop(test1, 101, eTime, 12).
 prop(test1, 101, day, mwf).
 
+prop(test1, 102, sTime, 16).
+prop(test1, 102, eTime, 17).
+prop(test1, 102, day, mwf).
+
 prop(test2, 101, sTime, 14).
 prop(test2, 101, eTime, 15).
 prop(test2, 101, day, mwf).
+
+prop(test2, 102, sTime, 10).
+prop(test2, 102, eTime, 11.5).
+prop(test2, 102, day, mwf).
 
 prop(test3, 101, sTime, 8).
 prop(test3, 101, eTime, 9).
@@ -265,7 +293,35 @@ prop(test6, 101, day, tth).
 % compatableSections(test1, 101, test6, 101). % should be true
 
 
+% allSectionsCompatable([course(test1,101),course(test2,101),course(test3,101)]). should be true
+% allSectionsCompatable([course(test1,101),course(test2,101),course(test3,101),course(test5,101)]). should be false
 
+allSectionsCompatable([]).
+allSectionsCompatable([course(Course, Sec) | T]) :-
+    sectionCompatableWithAll(Course, Sec, T),
+    allSectionsCompatable(T).
+
+sectionCompatableWithAll(_, _, []).
+sectionCompatableWithAll(Course1, Sec1, [course(Course2, Sec2) | T]) :-
+    compatableSections(Course1, Sec1, Course2, Sec2),
+    sectionCompatableWithAll(Course1, Sec1, T).
+
+courseSectionPair(Course, Section, course(Course, Section)) :-
+    prop(Course, Section, day, _).
+
+courseListToPairs([], []).
+courseListToPairs([Course | T1], [course(Course, Sec) | T2]) :-
+    courseSectionPair(Course, Sec, course(Course, Sec)),
+    courseListToPairs(T1, T2).
+
+findCompatableSections(Courses, Sections) :-
+    courseListToPairs(Courses, Sections),
+    allSectionsCompatable(Sections).
+
+startTimes([], []).
+startTimes([course(Course, Sec) | T1], [Stime | T2]) :-
+    prop(Course, Sec, sTime, Stime),
+    startTimes(T1, T2).
 
 
 %
@@ -408,8 +464,8 @@ prop(210, _, prereq, 110).
 prop(210, 101, term, 1).
 prop(210, 101, instructor, "Elisa Baniassad").
 prop(210, 101, day, mwf).
-prop(210, 101, sTime, 12:00).
-prop(210, 101, eTime, 13:00).
+prop(210, 101, sTime, 12).
+prop(210, 101, eTime, 13).
 prop(210, 101, building, "West Mall Swing Space").
 prop(210, 101, room, 122).
 
@@ -417,8 +473,8 @@ prop(210, 101, room, 122).
 prop(210, 102, term, 1).
 prop(210, 102, instructor, "Ali Madooei").
 prop(210, 102, day, mwf).
-prop(210, 102, sTime, 15:00).
-prop(210, 102, eTime, 16:00).
+prop(210, 102, sTime, 15).
+prop(210, 102, eTime, 16).
 prop(210, 102, building, "Hugh Dempster Pavilion").
 prop(210, 102, room, 310).
 
@@ -426,8 +482,8 @@ prop(210, 102, room, 310).
 prop(210, 103, term, 1).
 prop(210, 103, instructor, "Michael Feeley").
 prop(210, 103, day, mwf).
-prop(210, 103, sTime, 14:00).
-prop(210, 103, eTime, 15:00).
+prop(210, 103, sTime, 14).
+prop(210, 103, eTime, 15).
 prop(210, 103, building, "Hugh Dempster Pavilion").
 prop(210, 103, room, 310).
 
@@ -435,8 +491,8 @@ prop(210, 103, room, 310).
 prop(210, 201, term, 2).
 prop(210, 201, instructor, "Paul Martin Carter").
 prop(210, 201, day, mwf).
-prop(210, 201, sTime, 14:00).
-prop(210, 201, eTime, 15:00).
+prop(210, 201, sTime, 14).
+prop(210, 201, eTime, 15).
 prop(210, 201, building, "West Mall Swing Space").
 prop(210, 201, room, 121).
 
@@ -444,8 +500,8 @@ prop(210, 201, room, 121).
 prop(210, 202, term, 2).
 prop(210, 202, instructor, "Ali Madooei").
 prop(210, 202, day, mwf).
-prop(210, 202, sTime, 12:00).
-prop(210, 202, eTime, 13:00).
+prop(210, 202, sTime, 12).
+prop(210, 202, eTime, 13).
 prop(210, 202, building, "Hugh Dempster Pavilion").
 prop(210, 202, room, 310).
 
@@ -453,8 +509,8 @@ prop(210, 202, room, 310).
 prop(210, 203, term, 2).
 prop(210, 203, instructor, "Paul Martin Carter").
 prop(210, 203, day, mwf).
-prop(210, 203, sTime, 15:00).
-prop(210, 203, eTime, 16:00).
+prop(210, 203, sTime, 15).
+prop(210, 203, eTime, 16).
 prop(210, 203, building, "West Mall Swing Space").
 prop(210, 203, room, 222).
 
@@ -472,8 +528,8 @@ prop(213, _, prereq, 210).
 prop(213, 101, term, 1).
 prop(213, 101, instructor, "Jonatan Schroeder").
 prop(213, 101, day, tth).
-prop(213, 101, sTime, 14:00).
-prop(213, 101, eTime, 15:30).
+prop(213, 101, sTime, 14).
+prop(213, 101, eTime, 15.5).
 prop(213, 101, building, "Hugh Dempster Pavilion").
 prop(213, 101, room, 310).
 
@@ -481,8 +537,8 @@ prop(213, 101, room, 310).
 prop(213, 102, term, 1).
 prop(213, 102, instructor, "Jonatan Schroeder").
 prop(213, 102, day, mwf).
-prop(213, 102, sTime, 13:00).
-prop(213, 102, eTime, 14:00).
+prop(213, 102, sTime, 13).
+prop(213, 102, eTime, 14).
 prop(213, 102, building, "Hugh Dempster Pavilion").
 prop(213, 102, room, 310).
 
@@ -490,8 +546,8 @@ prop(213, 102, room, 310).
 prop(213, 203, term, 2).
 prop(213, 203, instructor, "Michael Feeley").
 prop(213, 203, day, mwf).
-prop(213, 203, sTime, 13:00).
-prop(213, 203, eTime, 14:00).
+prop(213, 203, sTime, 13).
+prop(213, 203, eTime, 14).
 prop(213, 203, building, "Hugh Dempster Pavilion").
 prop(213, 203, room, 310).
 
@@ -499,8 +555,8 @@ prop(213, 203, room, 310).
 prop(213, 204, term, 2).
 prop(213, 204, instructor, "Anthony Estey").
 prop(213, 204, day, mwf).
-prop(213, 204, sTime, 9:00).
-prop(213, 204, eTime, 10:00).
+prop(213, 204, sTime, 9).
+prop(213, 204, eTime, 10).
 prop(213, 204, building, "Hugh Dempster Pavilion").
 prop(213, 204, room, 310).
 
@@ -519,8 +575,8 @@ prop(221, _, prereq, 121).
 prop(221, 101, term, 1).
 prop(221, 101, instructor, "Geoffrey Tien").
 prop(221, 101, day, mwf).
-prop(221, 101, sTime, 14:00).
-prop(221, 101, eTime, 15:00).
+prop(221, 101, sTime, 14).
+prop(221, 101, eTime, 15).
 prop(221, 101, building, "West Mall Swing Space").
 prop(221, 101, room, 221).
 
@@ -528,8 +584,8 @@ prop(221, 101, room, 221).
 prop(221, 102, term, 1).
 prop(221, 102, instructor, "Cinda Heeren").
 prop(221, 102, day, tth).
-prop(221, 102, sTime, 9:30).
-prop(221, 102, eTime, 11:00).
+prop(221, 102, sTime, 9.5).
+prop(221, 102, eTime, 11).
 prop(221, 102, building, "Hugh Dempster Pavilion").
 prop(221, 102, room, 310).
 
@@ -537,8 +593,8 @@ prop(221, 102, room, 310).
 prop(221, 201, term, 2).
 prop(221, 201, instructor, "Geoffrey Tien").
 prop(221, 201, day, mwf).
-prop(221, 201, sTime, 17:00).
-prop(221, 201, eTime, 18:00).
+prop(221, 201, sTime, 17).
+prop(221, 201, eTime, 18).
 prop(221, 201, building, "Pharmaceutical Sciences Building").
 prop(221, 201, room, 1201).
 
@@ -546,8 +602,8 @@ prop(221, 201, room, 1201).
 prop(221, 202, term, 2).
 prop(221, 202, instructor, "William Evans").
 prop(221, 202, day, mwf).
-prop(221, 202, sTime, 16:00).
-prop(221, 202, eTime, 17:00).
+prop(221, 202, sTime, 16).
+prop(221, 202, eTime, 17).
 prop(221, 202, building, "Wesbrook").
 prop(221, 202, room, 100).
 
@@ -555,8 +611,8 @@ prop(221, 202, room, 100).
 prop(221, 203, term, 2).
 prop(221, 203, instructor, "Cinda Heeren").
 prop(221, 203, day, mwf).
-prop(221, 203, sTime, 12:00).
-prop(221, 203, eTime, 13:00).
+prop(221, 203, sTime, 12).
+prop(221, 203, eTime, 13).
 prop(221, 203, building, "Pharmaceutical Sciences Building").
 prop(221, 203, room, 1101).
 
@@ -573,8 +629,8 @@ prop(310, _, prereq, 210).
 prop(310, 101, term, 1).
 prop(310, 101, instructor, "Anthony Estey").
 prop(310, 101, day, tth).
-prop(310, 101, sTime, 12:30).
-prop(310, 101, eTime, 14:00).
+prop(310, 101, sTime, 12.5).
+prop(310, 101, eTime, 14).
 prop(310, 101, building, "West Mall Swing Space").
 prop(310, 101, room, 122).
 
@@ -582,8 +638,8 @@ prop(310, 101, room, 122).
 prop(310, 102, term, 1).
 prop(310, 102, instructor, "Reid Holmes").
 prop(310, 102, day, tth).
-prop(310, 102, sTime, 9:30).
-prop(310, 102, eTime, 11:00).
+prop(310, 102, sTime, 9.5).
+prop(310, 102, eTime, 11).
 prop(310, 102, building, "West Mall Swing Space").
 prop(310, 102, room, 221).
 
@@ -591,10 +647,27 @@ prop(310, 102, room, 221).
 prop(310, 201, term, 2).
 prop(310, 201, instructor, "Elisa Baniassad").
 prop(310, 201, day, tth).
-prop(310, 201, sTime, 12:30).
-prop(310, 201, eTime, 14:00).
+prop(310, 201, sTime, 12.5).
+prop(310, 201, eTime, 14).
 prop(310, 201, building, "Hugh Dempster Pavilion").
 prop(310, 201, room, 310).
+
+
+% course 312
+prop(312, _, course, 312).
+prop(312, _, name, "Functional and Logic Programming").
+% fundamental
+prop(312, _, type, "fundamental").
+prop(312, _, prereq, 210).
+
+% section 101
+prop(312, 101, term, 1).
+prop(312, 101, instructor, "David Poole").
+prop(312, 101, day, mwf).
+prop(312, 101, sTime, 12).
+prop(312, 101, eTime, 13).
+prop(312, 101, building, "Hugh Dempster Pavilion").
+prop(312, 101, room, 310).
 
 
 % course 313
@@ -611,8 +684,8 @@ prop(313, _, prereq, 221).
 prop(313, 101, term, 1).
 prop(313, 101, instructor, "Jonatan Schroeder").
 prop(313, 101, day, mwf).
-prop(313, 101, sTime, 11:00).
-prop(313, 101, eTime, 12:00).
+prop(313, 101, sTime, 11).
+prop(313, 101, eTime, 12).
 prop(313, 101, building, "Hugh Dempster Pavilion").
 prop(313, 101, room, 310).
 
@@ -620,8 +693,8 @@ prop(313, 101, room, 310).
 prop(313, 203, term, 2).
 prop(313, 203, instructor, "Jonatan Schroeder").
 prop(313, 203, day, mwf).
-prop(313, 203, sTime, 14:00).
-prop(313, 203, eTime, 15:00).
+prop(313, 203, sTime, 14).
+prop(313, 203, eTime, 15).
 prop(313, 203, building, "Leonard S. Klinck").
 prop(313, 203, room, 200).
 
@@ -629,10 +702,77 @@ prop(313, 203, room, 200).
 prop(313, 204, term, 2).
 prop(313, 204, instructor, "Donald Acton").
 prop(313, 204, day, tth).
-prop(313, 204, sTime, 12:30).
-prop(313, 204, eTime, 14:00).
+prop(313, 204, sTime, 12.5).
+prop(313, 204, eTime, 14).
 prop(313, 204, building, "Friedman Building").
 prop(313, 204, room, 153).
+
+
+% course 314
+prop(314, _, course, 314).
+prop(314, _, name, "Computer Graphics").
+prop(314, _, type, "graphics").
+prop(314, _, prereq, 221).
+
+% section 101
+prop(314, 101, term, 1).
+prop(314, 101, instructor, "Michael van der Panne").
+prop(314, 101, day, mwf).
+prop(314, 101, sTime, 10).
+prop(314, 101, eTime, 11).
+prop(314, 101, building, "Hugh Dempster Pavilion").
+prop(314, 101, room, 110).
+
+% section 201
+prop(314, 201, term, 2).
+prop(314, 201, instructor, "Dinesh Pai").
+prop(314, 201, day, mwf).
+prop(314, 201, sTime, 10).
+prop(314, 201, eTime, 11).
+prop(314, 201, building, "Hugh Dempster Pavilion").
+prop(314, 201, room, 310).
+
+
+% course 317
+prop(317, _, course, 317).
+prop(317, _, name, "Internet Computing").
+prop(317, _, type, "fundamental").
+prop(317, _, prereq, 213).
+prop(317, _, prereq, 221).
+
+% section 101
+prop(317, 101, term, 1).
+prop(317, 101, instructor, "Alan Wagner").
+prop(317, 101, day, mwf).
+prop(317, 101, sTime, 11).
+prop(317, 101, eTime, 12).
+prop(317, 101, building, "West Mall Swing Space").
+prop(317, 101, room, 121).
+
+% section 203
+prop(317, 201, term, 2).
+prop(317, 201, instructor, "Alan Wagner").
+prop(317, 201, day, mwf).
+prop(317, 201, sTime, 15).
+prop(317, 201, eTime, 16).
+prop(317, 201, building, "MacMillan").
+prop(317, 201, room, 166).
+
+
+% course 319
+prop(319, _, course, 319).
+prop(319, _, name, "Software Engineering Project").
+prop(319, _, type, "fundamental").
+prop(319, _, prereq, 310).
+
+% section 201
+prop(319, 201, term, 2).
+prop(319, 201, instructor, "Jerry Jim").
+prop(319, 201, day, tth).
+prop(319, 201, sTime, 12.5).
+prop(319, 201, eTime, 14).
+prop(319, 201, building, "Hugh Dempster Pavilion").
+prop(319, 201, room, 110).
 
 
 % course 320
@@ -648,8 +788,8 @@ prop(320, _, prereq, 221).
 prop(320, 101, term, 1).
 prop(320, 101, instructor, "Anne Condon").
 prop(320, 101, day, mwf).
-prop(320, 101, sTime, 14:00).
-prop(320, 101, eTime, 15:00).
+prop(320, 101, sTime, 14).
+prop(320, 101, eTime, 15).
 prop(320, 101, building, "Hennings").
 prop(320, 101, room, 200).
 
@@ -657,8 +797,8 @@ prop(320, 101, room, 200).
 prop(320, 102, term, 1).
 prop(320, 102, instructor, "Patrice Belleville").
 prop(320, 102, day, mwf).
-prop(320, 102, sTime, 16:00).
-prop(320, 102, eTime, 17:00).
+prop(320, 102, sTime, 16).
+prop(320, 102, eTime, 17).
 prop(320, 102, building, "Hennings").
 prop(320, 102, room, 200).
 
@@ -666,8 +806,8 @@ prop(320, 102, room, 200).
 prop(320, 201, term, 2).
 prop(320, 201, instructor, "Geoffrey Tien").
 prop(320, 201, day, mwf).
-prop(320, 201, sTime, 10:00).
-prop(320, 201, eTime, 11:00).
+prop(320, 201, sTime, 10).
+prop(320, 201, eTime, 11).
 prop(320, 201, building, "Hennings").
 prop(320, 201, room, 200).
 
@@ -675,8 +815,8 @@ prop(320, 201, room, 200).
 prop(320, 202, term, 2).
 prop(320, 202, instructor, "Anne Condon").
 prop(320, 202, day, mwf).
-prop(320, 202, sTime, 8:00).
-prop(320, 202, eTime, 9:00).
+prop(320, 202, sTime, 8).
+prop(320, 202, eTime, 9).
 prop(320, 202, building, "Hennings").
 prop(320, 202, room, 200).
 
@@ -694,8 +834,8 @@ prop(322, _, prereq, 221).
 prop(322, 101, term, 1).
 prop(322, 101, instructor, "Jordan Johnson").
 prop(322, 101, day, tth).
-prop(322, 101, sTime, 17:00).
-prop(322, 101, eTime, 18:30).
+prop(322, 101, sTime, 17).
+prop(322, 101, eTime, 18.5).
 prop(322, 101, building, "Pharmaceutical Sciences Building").
 prop(322, 101, room, 1201).
 
@@ -703,8 +843,8 @@ prop(322, 101, room, 1201).
 prop(322, 201, term, 2).
 prop(322, 201, instructor, "TBA").
 prop(322, 201, day, tth).
-prop(322, 201, sTime, 9:30).
-prop(322, 201, eTime, 11:00).
+prop(322, 201, sTime, 9.5).
+prop(322, 201, eTime, 11).
 prop(322, 201, building, "Hugh Dempster Pavilion").
 prop(322, 201, room, 310).
 
@@ -722,8 +862,8 @@ prop(340, _, prereq, 221).
 prop(340, 101, term, 1).
 prop(340, 101, instructor, "Mark Schmidt").
 prop(340, 101, day, mwf).
-prop(340, 101, sTime, 16:00).
-prop(340, 101, eTime, 17:00).
+prop(340, 101, sTime, 16).
+prop(340, 101, eTime, 17).
 prop(340, 101, building, "MacMillan").
 prop(340, 101, room, 166).
 
@@ -731,8 +871,8 @@ prop(340, 101, room, 166).
 prop(340, 103, term, 1).
 prop(340, 103, instructor, "Michael Gelbart").
 prop(340, 103, day, mwf).
-prop(340, 103, sTime, 12:00).
-prop(340, 103, eTime, 13:00).
+prop(340, 103, sTime, 12).
+prop(340, 103, eTime, 13).
 prop(340, 103, building, "Hugh Dempster Pavilion").
 prop(340, 103, room, 110).
 
@@ -740,7 +880,80 @@ prop(340, 103, room, 110).
 prop(340, 201, term, 2).
 prop(340, 201, instructor, "Frank Wood").
 prop(340, 201, day, mwf).
-prop(340, 201, sTime, 13:00).
-prop(340, 201, eTime, 14:00).
+prop(340, 201, sTime, 13).
+prop(340, 201, eTime, 14).
 prop(340, 201, building, "MacMillan").
 prop(340, 201, room, 166).
+
+
+% course 410
+prop(410, _, course, 410).
+prop(410, _, name, "Advanced Software Engineering").
+prop(410, _, type, "fundamental").
+prop(410, _, prereq, 310).
+
+% section 101
+prop(410, 101, term, 1).
+prop(410, 101, instructor, "Elisa Baniassad").
+prop(410, 101, day, tth).
+prop(410, 101, sTime, 11).
+prop(410, 101, eTime, 12.5).
+prop(410, 101, building, "Hugh Dempster Pavilion").
+prop(410, 101, room, 110).
+
+
+% course 418
+prop(418, _, course, 418).
+prop(418, _, name, "Parallel Computation").
+prop(418, _, type, "fundamental").
+prop(418, _, prereq, 313).
+prop(418, _, prereq, 320).
+
+% section 101
+prop(418, 101, term, 1).
+prop(418, 101, instructor, "Mark Greenstreet").
+prop(418, 101, day, mwf).
+prop(418, 101, sTime, 13).
+prop(418, 101, eTime, 14).
+prop(418, 101, building, "Hugh Dempster Pavilion").
+prop(418, 101, room, 301).
+
+
+% course 420
+prop(420, _, course, 420).
+prop(420, _, name, "Advanced Algorithms Design and Analysis").
+prop(420, _, type, "fundamental").
+prop(420, _, prereq, 320).
+
+% section 101
+prop(420, 101, term, 1).
+prop(420, 101, instructor, "Alan Hu").
+prop(420, 101, day, mwf).
+prop(420, 101, sTime, 9).
+prop(420, 101, eTime, 10).
+prop(420, 101, building, "Hugh Dempster Pavilion").
+prop(420, 101, room, 110).
+
+% section 201
+prop(420, 201, term, 2).
+prop(420, 201, instructor, "Hu Fu").
+prop(420, 201, day, mwf).
+prop(420, 201, sTime, 13).
+prop(420, 201, eTime, 14).
+prop(420, 201, building, "Hugh Dempster Pavilion").
+prop(420, 201, room, 110).
+
+
+% course 436D
+prop(cpsc436D, _, course, "436D").
+prop(cpsc436D, _, name, "Topics in Computer Science").
+prop(cpsc436D, _, type, "fundamental").
+
+% section 201
+prop(cpsc436D, 201, term, 2).
+prop(cpsc436D, 201, instructor, "Hu Fu").
+prop(cpsc436D, 201, day, mwf).
+prop(cpsc436D, 201, sTime, 15).
+prop(cpsc436D, 201, eTime, 17).
+prop(cpsc436D, 201, building, "Hugh Dempster Pavilion").
+prop(cpsc436D, 201, room, 301).
