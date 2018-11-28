@@ -8,7 +8,7 @@
 %
 
 ask() :-
-    write("What would you like to do?\n"),
+    write("Hello! I am here to help you with your computer science scheduling needs. What would you like to do?\n"),
     write("1. When is a course offered?\n"),
     write("2. Who teaches a specific course?\n"),
     write("3. Can I take two specific courses at the same time?\n"),
