@@ -68,14 +68,15 @@ findTeacher(X, Y) :-
     ask().
 
 %
-% 3. Can I take two specific courses at the same time?
+% 3. Can I take some courses at the same time?
 %
 query(Input) :-
     Input = 3,
-    write("What is the first class?"),
+    write("Lets take a look and see if you can take the classes at the same time. What is the first class?"),
     read(ClassOne),
     write("What is the second class?"),
     read(ClassTwo),
+
     printCompatableSections(ClassOne, _, ClassTwo, _),
     ask().
 
@@ -249,6 +250,81 @@ list_min([H0, H1|T], Min) :-
 %
 % 6. Other
 %
+query(Input) :-
+    Input = 6,
+    write("What would you like to know?\n"),
+    read(Question),
+    q(Question, End, Ans),
+    member(End, [[], ['?'], ['.']]).
+
+q(['Is' | T0], T2, Obj) :-
+    nounp(T0, T1, Obj),
+    mp(T1, T2, Obj).
+q(['What', is | T0], T1, Obj) :-
+    mp(T0, T1, Obj).
+q(['What', is | T0], T1, Obj) :-
+    nounp(T0, T1, Obj).
+q(['What' | T0], T2, Obj) :-
+    nounp(T0, T1, Obj),
+    mp(T1, T2, Obj).
+
+nounp(T0, T4, In) :-
+    determiner(T0, T1, In),
+    adjective(T1, T2, In),
+    noun(T2, T3, In),
+    mp(T3, T4, In).
+
+mp(T0, T2, Sub) :-
+    related(T0, T1, Sub, Ob),
+    nounp(T1, T2, Ob).
+mp([that | T0], T2, Sub) :-
+    related(T0, T1, Sub, Ob),
+    nounp(T1, T2, Ob).
+mp(T, T, _).
+
+determiner([the | T], T, _).
+determiner([a | T], T, _).
+determiner(T, T, _).
+
+adjective(T0, T2, In) :-
+    adj(T0, T1, In),
+    adjective(T1, T2, In).
+adjective(T, T, _).
+
+%
+% Dictionary
+%
+noun([cpsc   | T], T, X) :- prop(X, _, course, X).
+noun([course | T], T, X) :- prop(X, _, course, X).
+noun([class  | T], T, X) :- prop(X, _, course, X).
+
+noun([professor  | T], T, X) :- prop(_, _, instructor, X).
+noun([prof       | T], T, X) :- prop(_, _, instructor, X).
+noun([teacher    | T], T, X) :- prop(_, _, instructor, X).
+noun([instructor | T], T, X) :- prop(_, _, instructor, X).
+
+noun([day | T], T, X) :- prop(_, _, day, X).
+
+noun([building | T], T, X) :- prop(_, _, building, X).
+
+noun([type | T], T, X) :- prop(_, _, type, X).
+
+noun([room | T],T,Obj) :- prop(_, _, room, Obj).
+
+related([the, professor, of | T], T, X, Y) :- prop(Y, _, instructor, X).
+related([the, prof, of | T], T, X, Y) :- prop(Y, _, instructor, X).
+related([the, teacher, of | T], T, X, Y) :- prop(Y, _, instructor, X).
+related([the, instructor, of | T], T, X, Y) :- prop(Y, _, instructor, X).
+
+adj([large | T],T,Obj) :- large(Obj).
+adj([Lang,speaking | T],T,Obj) :- speaks(Obj,Lang).
+
+
+
+
+
+
+
 
 
 prop(test1, 101, sTime, 11).
