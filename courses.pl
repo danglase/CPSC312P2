@@ -8,6 +8,103 @@
 % Start of the bot
 %
 
+%%%
+%%% user information (i.e., log in credentials)
+%%%
+
+login() :-
+    write("Username:\n"),
+    read(Username),
+    write("Password:\n"),
+    read(Password),
+    database(Username, Password).
+
+database(Username, Password) :-
+    users(Username, Password, List),
+    write("You are now logged in. "),
+    askuser(List).
+
+database(Username, Password) :-
+    users(Username, X, _),
+    X \= Password,
+    write("You have entered the wrong password. Please try again\n"),
+    login().
+
+database(_, _, _) :-
+    write("The username you entered is invalid. Please try again.\n"),
+    login().
+
+users(mark01, password1, [110, 121, 210]).
+users(csand, sunflower, [110, 121, 210, 213, 221, 310]).
+
+askuser(List) :-
+    write("What would you like to do?\n"),
+    write("1. When is a course offered?\n"),
+    write("2. Who teaches a specific course?\n"),
+    write("3. Can I take two specific courses at the same time?\n"),
+    write("4. What are the prerequisites of a course?\n"),
+    write("5. What course should I take?\n"),
+    write("6. What courses have I taken?\n"),
+    write("7. What other classes do I need to complete my degree?\n"),
+    write("8. Other\n"),
+    read(Input),
+    user_query(Input, List).
+
+user_query(Input, _) :-
+    Input = 1,
+    query(Input).
+user_query(Input, _) :-
+    Input = 2,
+    query(Input).
+user_query(Input, _) :-
+    Input = 3,
+    query(Input).
+user_query(Input, _) :-
+    Input = 4,
+    query(Input).
+
+user_query(Input, List) :-
+    Input = 5,
+    write("Based on the courses that you have taken, a good course to take next would be CPSC "),
+%%%%%%%%%% TODO %%%%%%%%%%
+    List.
+
+user_query(Input, List) :-
+    Input = 6,
+    write("The courses you have taken are: \n"),
+    print_classes(List, List).
+
+print_classes([H | []], List) :-
+    write("and CPSC "),
+    write(H),
+    write(".\n\n"),
+    askuser(List).
+
+print_classes([H | T], List) :-
+    write("CPSC "),
+    write(H),
+    write(", "),
+    print_classes(T, List).
+
+print_classes([], []) :-
+    write("You have not taken any courses yet.\n\n"),
+    askuser([]).
+
+
+%%%%%%%%%% TODO %%%%%%%%%%
+user_query(Input, List) :-
+    Input = 7,
+    List.
+
+%%%%%%%%%% TODO %%%%%%%%%%
+user_query(Input, _) :-
+    Input = 8,
+    query(Input).
+
+%%%
+%%% non-user access
+%%%
+
 ask() :-
     write("Hello! I am here to help you with your computer science scheduling needs. What would you like to do?\n"),
     write("1. When is a course offered?\n"),
@@ -19,9 +116,11 @@ ask() :-
     read(Input),
     query(Input).
 
-%
-% 1. When is a course offered?
-%
+%%%%%
+%%%%% Query 1
+%%%%% 1. When is a course offered?
+%%%%%
+
 query(Input) :-
     Input = 1,
     write("What class?"),
@@ -37,9 +136,11 @@ offered(X) :-
     write("\n\n"),
     ask().
 
-%
-% 2. Who teaches a specific course?
-%
+%%%%%
+%%%%% Query 2
+%%%%% 2. Who teaches a specific course?
+%%%%%
+
 query(Input) :-
     Input = 2,
     write("What class?"),
@@ -67,9 +168,11 @@ findTeacher(X, Y) :-
     write("\n\n"),
     ask().
 
-%
-% 3. Can I take some courses at the same time?
-%
+%%%%%
+%%%%% Query 3
+%%%%% 3. Can I take some courses at the same time?
+%%%%%
+
 query(Input) :-
     Input = 3,
     write("Lets take a look and see if you can take the classes at the same time. What is the first class?"),
