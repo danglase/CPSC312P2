@@ -365,7 +365,7 @@ prop(test4, 101, day, mwf).
 % compatableSections(test1, 101, test4, 101). % should be false
 
 prop(test5, 101, sTime, 11.5).
-prop(test5, 101, eTime, 13).
+prop(test5, 101, eTime, 17).
 prop(test5, 101, day, mwf).
 
 % compatableSections(test1, 101, test5, 101). % should be false
@@ -407,6 +407,90 @@ startTimes([course(Course, Sec) | T1], [Stime | T2]) :-
     prop(Course, Sec, sTime, Stime),
     startTimes(T1, T2).
 
+endTimes([], []).
+endTimes([course(Course, Sec) | T1], [Etime | T2]) :-
+    prop(Course, Sec, eTime, Etime),
+    endTimes(T1, T2).
+
+startTimeOfSchedule(Schedule, Stime) :-
+    startTimes(Schedule, Stimes),
+    min_list(Stimes, Stime).
+
+endTimeOfSchedule(Schedule, Etime) :-
+    endTimes(Schedule, Etimes),
+    max_list(Etimes, Etime).
+
+getAllStartTimes([], []).
+getAllStartTimes([Schedule | T], [Stime-Schedule | R]) :-
+    startTimeOfSchedule(Schedule, Stime),
+    getAllStartTimes(T, R).
+
+getAllEndTimes([], []).
+getAllEndTimes([Schedule | T], [Etime-Schedule | R]) :-
+    endTimeOfSchedule(Schedule, Etime),
+    getAllEndTimes(T, R).
+
+
+findSchedule() :-
+    write("What courses do you want to take?\n"), flush_output(current_output),
+    readln(Courses),
+    findall(Sections, findCompatableSections(Courses, Sections), L),
+    handleSchedules(L, [1,2]).
+
+handleSchedules([], _) :-
+    write("There is no possible schedule with these courses.\n").
+
+handleSchedules([A], _) :-
+    write("Schedule found:\n"),
+    write(A).
+
+handleSchedules([A | _], []) :-
+    write("Schedule found:\n"),
+    write(A).
+
+handleSchedules(L, AvailableOptions) :-
+    length(L, Length),
+    Length > 1,
+    write(Length),
+    write(" schedules found. To narrow it down, choose a criteria.\n"),
+    printOptions(AvailableOptions),
+    read(N),
+    filterList(L, N, R),
+    delete(AvailableOptions, N, NewOptions),
+    handleSchedules(R, NewOptions).
+
+printOptions([]).
+printOptions([H | T]) :-
+    option(H, O),
+    write(O),
+    printOptions(T).
+
+option(1, "1. Latest start time\n").
+option(2, "2. Earliest end time\n").
+
+filterList([], _, []).
+filterList(L, 1, R) :- getLatestStart(L, R).
+filterList(L, 2, R) :- getEarliestEnd(L, R).
+
+getLatestStart(L, R) :-
+    getAllStartTimes(L, Stimes),
+    keysort(Stimes, Sorted),
+    reverse(Sorted, Descending),
+    allResults(Descending, R).
+
+getEarliestEnd(L, R) :-
+    getAllEndTimes(L, Stimes),
+    keysort(Stimes, Sorted),
+    allResults(Sorted, R).
+
+allResults([], _, []).
+allResults([Stime-_ | _], Key, []) :-
+    Stime \= Key.
+allResults([Stime-Schedule | T], Stime, [Schedule | R]) :-
+    allResults(T, Stime, R).
+
+allResults([Key-Schedule | T], [Schedule | R]) :-
+    allResults(T, Key, R).
 
 %
 % Course Information Database
@@ -1029,15 +1113,15 @@ prop(420, 201, room, 110).
 
 
 % course 436D
-prop(cpsc436D, _, course, "436D").
-prop(cpsc436D, _, name, "Topics in Computer Science").
-prop(cpsc436D, _, type, "fundamental").
+prop(436, _, course, 436).
+prop(436, _, name, "Topics in Computer Science").
+prop(436, _, type, "fundamental").
 
 % section 201
-prop(cpsc436D, 201, term, 2).
-prop(cpsc436D, 201, instructor, "Hu Fu").
-prop(cpsc436D, 201, day, mwf).
-prop(cpsc436D, 201, sTime, 15).
-prop(cpsc436D, 201, eTime, 17).
-prop(cpsc436D, 201, building, "Hugh Dempster Pavilion").
-prop(cpsc436D, 201, room, 301).
+prop(436, 201, term, 2).
+prop(436, 201, instructor, "Hu Fu").
+prop(436, 201, day, mwf).
+prop(436, 201, sTime, 15).
+prop(436, 201, eTime, 17).
+prop(436, 201, building, "Hugh Dempster Pavilion").
+prop(436, 201, room, 301).
