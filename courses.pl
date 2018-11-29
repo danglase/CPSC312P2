@@ -257,6 +257,12 @@ query(Input) :-
     q(Question, End, Ans),
     member(End, [[], ['?'], ['.']]).
 
+question(Ans) :-
+    write("Ask me: "), flush_output(current_output),
+    readln(Ln),
+    q(Ln,End,Ans),
+    member(End,[[],['?'],['.']]).
+
 q(['Is' | T0], T2, Obj) :-
     nounp(T0, T1, Obj),
     mp(T1, T2, Obj).
@@ -310,6 +316,8 @@ noun([building | T], T, X) :- prop(_, _, building, X).
 noun([type | T], T, X) :- prop(_, _, type, X).
 
 noun([room | T],T,Obj) :- prop(_, _, room, Obj).
+
+noun([Class | T], T, X) :- prop(X, _, course, Class).
 
 related([the, professor, of | T], T, X, Y) :- prop(Y, _, instructor, X).
 related([the, prof, of | T], T, X, Y) :- prop(Y, _, instructor, X).
