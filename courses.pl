@@ -9,7 +9,7 @@
 %
 
 %%%
-%%% user information (i.e., log in credentials)
+%%% user access (i.e., log in credentials)
 %%%
 
 login() :-
@@ -30,12 +30,14 @@ database(Username, Password) :-
     write("You have entered the wrong password. Please try again\n"),
     login().
 
-database(_, _, _) :-
+database(_, _) :-
     write("The username you entered is invalid. Please try again.\n"),
     login().
 
 users(mark01, password1, [110, 121, 210]).
 users(csand, sunflower, [110, 121, 210, 213, 221, 310]).
+users(tooth, brush, [110, 121, 210, 213, 221, 310, 313, 320, 312, 406, 410, 417, 422]).
+users(mynamejeff, mypassword, []).
 
 askuser(List) :-
     write("What would you like to do?\n"),
@@ -50,18 +52,127 @@ askuser(List) :-
     read(Input),
     user_query(Input, List).
 
-user_query(Input, _) :-
+%%%%%
+%%%%% User Query 1
+%%%%% 1. When is a course offered?
+%%%%%
+
+user_query(Input, List) :-
     Input = 1,
-    query(Input).
-user_query(Input, _) :-
+    write("What class?"),
+    read(Class),
+    user_offered(Class, List).
+
+user_offered(X, List) :-
+    write("CPSC "),
+    write(X),
+    write(" is offered at these times:\n"),
+    findall(S, prop(X, S, section, S), Sections),
+    findtimes(X, Sections, List).
+
+findtimes(_, [], List) :-
+    write("\n\n"),
+    askuser(List).
+
+findtimes(X, [SH | ST], List) :-
+    prop(X, SH, day, A),
+    A = mwf,
+    write("Section "),
+    write(SH),
+    write(" is offered on "),
+    write("Monday, Wednesday, and Friday from "),
+    prop(X, SH, sTime, B),
+    convertTime(B),
+    write(" to "),
+    prop(X, SH, eTime, C),
+    convertTime(C),
+    write(" in term "),
+    prop(X, SH, term, D),
+    write(D),
+    write(".\n"),
+    findtimes(X, ST, List).
+
+findtimes(X, [SH | ST], List) :-
+    prop(X, SH, day, A),
+    A = tth,
+    write("Section "),
+    write(SH),
+    write(" is offered on "),
+    write("Tuesday, and Thursday from "),
+    prop(X, SH, sTime, B),
+    convertTime(B),
+    write(" to "),
+    prop(X, SH, eTime, C),
+    convertTime(C),
+    write(" in term "),
+    prop(X, SH, term, D),
+    write(D),
+    write(".\n"),
+    findtimes(X, ST, List).
+
+%%%%%
+%%%%% User Query 2
+%%%%% 2. Who teaches a specific course?
+%%%%%
+
+user_query(Input, List) :-
     Input = 2,
-    query(Input).
+    write("What class?"),
+    read(Class),
+    write("Specific section? (Type section number, or N for all sections)"),
+    read(Section),
+    userFindTeacher(Class, Section, List).
+
+userFindTeacher(X, Y, List) :-
+    Y = "N",
+    findall(T, prop(X, _, instructor, T), R),
+    write("The professors for CPSC "),
+    write(X),
+    write(" are: "),
+    write(R),
+    write("\n\n"),
+    askuser(List).
+
+userFindTeacher(X, Y, List) :-
+    findall(T, prop(X, Y, instructor, T), R),
+    write("The professor for CPSC "),
+    write(X),
+    write(" is "),
+    write(R),
+    write("\n\n"),
+    askuser(List).
+
+%%%%%
+%%%%% Query 3
+%%%%% 3. Can I take some courses at the same time?
+%%%%%
+
+%%%%%%%%%% TODO %%%%%%%%%%
 user_query(Input, _) :-
     Input = 3,
     query(Input).
-user_query(Input, _) :-
+
+%%%%%
+%%%%% User Query 4
+%%%%% 4. What are the prerequisites of a course?
+%%%%%
+
+user_query(Input, List) :-
     Input = 4,
-    query(Input).
+    write("What class?"),
+    read(Class),
+    userFindPreReqs(Class, List).
+
+userFindPreReqs(X, List) :-
+    findall(P, prop(X, _, prereq, P), R),
+    write("The prerequisites for CPSC "),
+    write(X),
+    write(" are: "),
+    write(R),
+    write("\n\n"),
+    askuser(List).
+
+
 
 user_query(Input, List) :-
     Input = 5,
@@ -69,16 +180,24 @@ user_query(Input, List) :-
 %%%%%%%%%% TODO %%%%%%%%%%
     List.
 
+%%%%%
+%%%%% User Query 6
+%%%%% 6. What courses have I taken?
+%%%%%
+
 user_query(Input, List) :-
     Input = 6,
     write("The courses you have taken are: \n"),
     print_classes(List, List).
 
+print_classes([], List) :-
+    write(".\n\n"),
+    askuser(List).
+
 print_classes([H | []], List) :-
     write("and CPSC "),
     write(H),
-    write(".\n\n"),
-    askuser(List).
+    print_classes([], List).
 
 print_classes([H | T], List) :-
     write("CPSC "),
@@ -90,11 +209,46 @@ print_classes([], []) :-
     write("You have not taken any courses yet.\n\n"),
     askuser([]).
 
+%%%%%
+%%%%% User Query 7
+%%%%% 7. What other classes do I need to complete my degree?
+%%%%%
 
-%%%%%%%%%% TODO %%%%%%%%%%
+requirements(science, [110, 121, 210, 213, 310, 313, 320, 340, 402, 406, 425, 426]).
+requirements(arts, [110, 121, 210, 213, 221, 310, 313, 320, 312, 406, 410, 417, 422]).
+
 user_query(Input, List) :-
     Input = 7,
-    List.
+    write("Are you interested in the Bachelor of Arts in Computer Science, or the Bachelor of Science in Computer Science?\n"),
+    write("Type 1 for arts, and type 2 for science.\n"),
+    read(Req),
+    findRequirements(Req, List).
+
+findRequirements(Req, List) :-
+    Req = 1,
+    write("The courses that you still need to take for a Bachelor of Arts are:\n"),
+    requirements(arts, X),
+    subtract(X, List, Needs),
+    findNeeds(Needs, List).
+
+findRequirements(Req, List) :-
+    Req = 2,
+    write("The courses that you still need to take for a Bachelor of Science are:\n"),
+    requirements(science, X),
+    subtract(X, List, Needs),
+    findNeeds(Needs, List).
+
+findRequirements(_, List) :-
+    write("I didn't understand your request. Please try again.\n"),
+    user_query(7, List).
+
+findNeeds([], List) :-
+    write("You don't need anymore classes! Yay!\n\n"),
+    askuser(List).
+
+findNeeds(Needs, List) :-
+    print_classes(Needs, List),
+    askuser(List).
 
 %%%%%%%%%% TODO %%%%%%%%%%
 user_query(Input, _) :-
@@ -130,11 +284,49 @@ query(Input) :-
 offered(X) :-
     write("CPSC "),
     write(X),
-    write(" is offered at these times: "),
-    findall(D, prop(X, _, day, D), R),
-    write(R),
+    write(" is offered at these times:\n"),
+    findall(S, prop(X, S, section, S), Sections),
+    find_times(X, Sections).
+
+find_times(_, []) :-
     write("\n\n"),
     ask().
+
+find_times(X, [SH | ST]) :-
+    prop(X, SH, day, A),
+    A = mwf,
+    write("Section "),
+    write(SH),
+    write(" is offered on "),
+    write("Monday, Wednesday, and Friday from "),
+    prop(X, SH, sTime, B),
+    convertTime(B),
+    write(" to "),
+    prop(X, SH, eTime, C),
+    convertTime(C),
+    write(" in term "),
+    prop(X, SH, term, D),
+    write(D),
+    write(".\n"),
+    find_times(X, ST).
+
+find_times(X, [SH | ST]) :-
+    prop(X, SH, day, A),
+    A = tth,
+    write("Section "),
+    write(SH),
+    write(" is offered on "),
+    write("Tuesday, and Thursday from "),
+    prop(X, SH, sTime, B),
+    convertTime(B),
+    write(" to "),
+    prop(X, SH, eTime, C),
+    convertTime(C),
+    write(" in term "),
+    prop(X, SH, term, D),
+    write(D),
+    write(".\n"),
+    find_times(X, ST).
 
 %%%%%
 %%%%% Query 2
@@ -259,9 +451,11 @@ differentTimes(Course1, Sec1, Course2, Sec2) :-
         Stime2 >= Etime1
     ).
 
-%
-% 4. What are the prerequisites of a course?
-%
+%%%%%
+%%%%% Query 4
+%%%%% 4. What are the prerequisites of a course?
+%%%%%
+
 query(Input) :-
     Input = 4,
     write("What class?"),
@@ -436,50 +630,6 @@ adj([Lang,speaking | T],T,Obj) :- speaks(Obj,Lang).
 
 
 
-
-
-prop(test1, 101, sTime, 11).
-prop(test1, 101, eTime, 12).
-prop(test1, 101, day, mwf).
-
-prop(test1, 102, sTime, 16).
-prop(test1, 102, eTime, 17).
-prop(test1, 102, day, mwf).
-
-prop(test2, 101, sTime, 14).
-prop(test2, 101, eTime, 15).
-prop(test2, 101, day, mwf).
-
-prop(test2, 102, sTime, 10).
-prop(test2, 102, eTime, 11.5).
-prop(test2, 102, day, mwf).
-
-prop(test3, 101, sTime, 8).
-prop(test3, 101, eTime, 9).
-prop(test3, 101, day, mwf).
-
-% compatableSections(test1, 101, test2, 101). % should be true
-% compatableSections(test1, 101, test3, 101). % should be true
-
-prop(test4, 101, sTime, 10).
-prop(test4, 101, eTime, 11.5).
-prop(test4, 101, day, mwf).
-
-% compatableSections(test1, 101, test4, 101). % should be false
-
-prop(test5, 101, sTime, 11.5).
-prop(test5, 101, eTime, 13).
-prop(test5, 101, day, mwf).
-
-% compatableSections(test1, 101, test5, 101). % should be false
-
-prop(test6, 101, sTime, 11.5).
-prop(test6, 101, eTime, 13).
-prop(test6, 101, day, tth).
-
-% compatableSections(test1, 101, test6, 101). % should be true
-
-
 % allSectionsCompatable([course(test1,101),course(test2,101),course(test3,101)]). should be true
 % allSectionsCompatable([course(test1,101),course(test2,101),course(test3,101),course(test5,101)]). should be false
 
@@ -511,6 +661,97 @@ startTimes([course(Course, Sec) | T1], [Stime | T2]) :-
     startTimes(T1, T2).
 
 
+
+
+
+convertTime(T) :-
+    T = 8,
+    write("8:00AM").
+convertTime(T) :-
+    T = 8.5,
+    write("8:30AM").
+convertTime(T) :-
+    T = 9,
+    write("9:00AM").
+convertTime(T) :-
+    T = 9.5,
+    write("9:30AM").
+convertTime(T) :-
+    T = 10,
+    write("10:00AM").
+convertTime(T) :-
+    T = 10.5,
+    write("10:30AM").
+convertTime(T) :-
+    T = 11,
+    write("11:00AM").
+convertTime(T) :-
+    T = 11.5,
+    write("11:30AM").
+convertTime(T) :-
+    T = 12,
+    write("12:00PM").
+convertTime(T) :-
+    T = 12.5,
+    write("12:30PM").
+convertTime(T) :-
+    T = 13,
+    write("1:00PM").
+convertTime(T) :-
+    T = 13.5,
+    write("1:30PM").
+convertTime(T) :-
+    T = 14,
+    write("2:00PM").
+convertTime(T) :-
+    T = 14.5,
+    write("2:30PM").
+convertTime(T) :-
+    T = 15,
+    write("3:00PM").
+convertTime(T) :-
+    T = 15.5,
+    write("3:30PM").
+convertTime(T) :-
+    T = 16,
+    write("4:00PM").
+convertTime(T) :-
+    T = 16.5,
+    write("4:30PM").
+convertTime(T) :-
+    T = 17,
+    write("5:00PM").
+convertTime(T) :-
+    T = 17.5,
+    write("5:30PM").
+convertTime(T) :-
+    T = 18,
+    write("6:00PM").
+convertTime(T) :-
+    T = 18.5,
+    write("6:30PM").
+convertTime(T) :-
+    T = 19,
+    write("7:00PM").
+convertTime(T) :-
+    T = 19.5,
+    write("7:30PM").
+convertTime(T) :-
+    T = 20,
+    write("8:00PM").
+convertTime(T) :-
+    T = 20.5,
+    write("8:30PM").
+convertTime(T) :-
+    T = 21,
+    write("9:00PM").
+convertTime(T) :-
+    T = 21.5,
+    write("9:30PM").
+convertTime(T) :-
+    T = 22,
+    write("10:00PM").
+
 %
 % Course Information Database
 % Course(number, name, type, prereq, section, term, instructor, days, start time, end time, building, room)
@@ -532,6 +773,7 @@ prop(110, _, prereq, none).
 
 % section 101
 prop(110, 101, term, 1).
+prop(110, 101, section, 110).
 prop(110, 101, instructor, "Gregor Kiczales").
 prop(110, 101, day, tth).
 prop(110, 101, sTime, 12.5).
@@ -541,6 +783,7 @@ prop(110, 101, room, 2).
 
 % section 103
 prop(110, 103, term, 1).
+prop(110, 103, section, 103).
 prop(110, 103, instructor, "Oluwakemi Ola").
 prop(110, 103, day, mwf).
 prop(110, 103, sTime, 16).
@@ -550,6 +793,7 @@ prop(110, 103, room, 100).
 
 % section 201
 prop(110, 201, term, 2).
+prop(110, 201, section, 201).
 prop(110, 201, instructor, "Anthony Estey").
 prop(110, 201, day, tth).
 prop(110, 201, sTime, 15.5).
@@ -559,6 +803,7 @@ prop(110, 201, room, 100).
 
 % section 202
 prop(110, 202, term, 2).
+prop(110, 202, section, 202).
 prop(110, 202, instructor, "Oluwakemi Ola").
 prop(110, 202, day, mwf).
 prop(110, 202, sTime, 15).
@@ -568,6 +813,7 @@ prop(110, 202, room, 1005).
 
 % section 203
 prop(110, 203, term, 2).
+prop(110, 203, section, 203).
 prop(110, 203, instructor, "Anthony Estey").
 prop(110, 203, day, tth).
 prop(110, 203, sTime, 9.5).
@@ -585,6 +831,7 @@ prop(121, _, prereq, none).
 
 % section 101
 prop(121, 101, term, 1).
+prop(121, 101, section, 101).
 prop(121, 101, instructor, "Patrice Belleville").
 prop(121, 101, day, tth).
 prop(121, 101, sTime, 9.5).
@@ -594,6 +841,7 @@ prop(121, 101, room, 1201).
 
 % section 102
 prop(121, 102, term, 1).
+prop(121, 102, section, 102).
 prop(121, 102, instructor, "Frederick Shepherd").
 prop(121, 102, day, tth).
 prop(121, 102, sTime, 15.5).
@@ -603,6 +851,7 @@ prop(121, 102, room, 310).
 
 % section 103
 prop(121, 103, term, 1).
+prop(121, 103, section, 103).
 prop(121, 103, instructor, "Cinda Heeren").
 prop(121, 103, day, tth).
 prop(121, 103, sTime, 17).
@@ -612,6 +861,7 @@ prop(121, 103, room, 310).
 
 % section 201
 prop(121, 201, term, 2).
+prop(121, 201, section, 201).
 prop(121, 201, instructor, "Cinda Heeren").
 prop(121, 201, day, mwf).
 prop(121, 201, sTime, 9).
@@ -621,6 +871,7 @@ prop(121, 201, room, 121).
 
 % section 202
 prop(121, 202, term, 2).
+prop(121, 202, section, 202).
 prop(121, 202, instructor, "Patrice Belleville").
 prop(121, 202, day, mwf).
 prop(121, 202, sTime, 12).
@@ -630,6 +881,7 @@ prop(121, 202, room, 166).
 
 % section 203
 prop(121, 203, term, 2).
+prop(121, 203, section, 203).
 prop(121, 203, instructor, "Patrice Belleville").
 prop(121, 203, day, mwf).
 prop(121, 203, sTime, 16).
@@ -649,6 +901,7 @@ prop(210, _, prereq, 110).
 
 % section 101
 prop(210, 101, term, 1).
+prop(210, 101, section, 101).
 prop(210, 101, instructor, "Elisa Baniassad").
 prop(210, 101, day, mwf).
 prop(210, 101, sTime, 12).
@@ -658,6 +911,7 @@ prop(210, 101, room, 122).
 
 % section 102
 prop(210, 102, term, 1).
+prop(210, 102, section, 102).
 prop(210, 102, instructor, "Ali Madooei").
 prop(210, 102, day, mwf).
 prop(210, 102, sTime, 15).
@@ -667,6 +921,7 @@ prop(210, 102, room, 310).
 
 % section 103
 prop(210, 103, term, 1).
+prop(210, 103, section, 103).
 prop(210, 103, instructor, "Michael Feeley").
 prop(210, 103, day, mwf).
 prop(210, 103, sTime, 14).
@@ -675,7 +930,8 @@ prop(210, 103, building, "Hugh Dempster Pavilion").
 prop(210, 103, room, 310).
 
 % section 201
-prop(210, 201, term, 2).
+prop(210, 103, term, 1).
+prop(210, 103, section, 201).
 prop(210, 201, instructor, "Paul Martin Carter").
 prop(210, 201, day, mwf).
 prop(210, 201, sTime, 14).
@@ -685,6 +941,7 @@ prop(210, 201, room, 121).
 
 % section 202
 prop(210, 202, term, 2).
+prop(210, 202, section, 202).
 prop(210, 202, instructor, "Ali Madooei").
 prop(210, 202, day, mwf).
 prop(210, 202, sTime, 12).
@@ -694,6 +951,7 @@ prop(210, 202, room, 310).
 
 % section 203
 prop(210, 203, term, 2).
+prop(210, 203, section, 203).
 prop(210, 203, instructor, "Paul Martin Carter").
 prop(210, 203, day, mwf).
 prop(210, 203, sTime, 15).
@@ -713,6 +971,7 @@ prop(213, _, prereq, 210).
 
 % section 101
 prop(213, 101, term, 1).
+prop(213, 101, section, 101).
 prop(213, 101, instructor, "Jonatan Schroeder").
 prop(213, 101, day, tth).
 prop(213, 101, sTime, 14).
@@ -722,6 +981,7 @@ prop(213, 101, room, 310).
 
 % section 102
 prop(213, 102, term, 1).
+prop(213, 102, section, 102).
 prop(213, 102, instructor, "Jonatan Schroeder").
 prop(213, 102, day, mwf).
 prop(213, 102, sTime, 13).
@@ -731,6 +991,7 @@ prop(213, 102, room, 310).
 
 % section 203
 prop(213, 203, term, 2).
+prop(213, 203, section, 203).
 prop(213, 203, instructor, "Michael Feeley").
 prop(213, 203, day, mwf).
 prop(213, 203, sTime, 13).
@@ -740,6 +1001,7 @@ prop(213, 203, room, 310).
 
 % section 204
 prop(213, 204, term, 2).
+prop(213, 204, section, 204).
 prop(213, 204, instructor, "Anthony Estey").
 prop(213, 204, day, mwf).
 prop(213, 204, sTime, 9).
@@ -760,6 +1022,7 @@ prop(221, _, prereq, 121).
 
 % section 101
 prop(221, 101, term, 1).
+prop(221, 101, section, 101).
 prop(221, 101, instructor, "Geoffrey Tien").
 prop(221, 101, day, mwf).
 prop(221, 101, sTime, 14).
@@ -769,6 +1032,7 @@ prop(221, 101, room, 221).
 
 % section 102
 prop(221, 102, term, 1).
+prop(221, 102, section, 102).
 prop(221, 102, instructor, "Cinda Heeren").
 prop(221, 102, day, tth).
 prop(221, 102, sTime, 9.5).
@@ -778,6 +1042,7 @@ prop(221, 102, room, 310).
 
 % section 201
 prop(221, 201, term, 2).
+prop(221, 201, section, 201).
 prop(221, 201, instructor, "Geoffrey Tien").
 prop(221, 201, day, mwf).
 prop(221, 201, sTime, 17).
@@ -787,6 +1052,7 @@ prop(221, 201, room, 1201).
 
 % section 202
 prop(221, 202, term, 2).
+prop(221, 202, section, 202).
 prop(221, 202, instructor, "William Evans").
 prop(221, 202, day, mwf).
 prop(221, 202, sTime, 16).
@@ -796,6 +1062,7 @@ prop(221, 202, room, 100).
 
 % section 203
 prop(221, 203, term, 2).
+prop(221, 203, section, 203).
 prop(221, 203, instructor, "Cinda Heeren").
 prop(221, 203, day, mwf).
 prop(221, 203, sTime, 12).
@@ -814,6 +1081,7 @@ prop(310, _, prereq, 210).
 
 % section 101
 prop(310, 101, term, 1).
+prop(310, 101, section, 101).
 prop(310, 101, instructor, "Anthony Estey").
 prop(310, 101, day, tth).
 prop(310, 101, sTime, 12.5).
@@ -823,6 +1091,7 @@ prop(310, 101, room, 122).
 
 % section 102
 prop(310, 102, term, 1).
+prop(310, 102, section, 102).
 prop(310, 102, instructor, "Reid Holmes").
 prop(310, 102, day, tth).
 prop(310, 102, sTime, 9.5).
@@ -832,6 +1101,7 @@ prop(310, 102, room, 221).
 
 % section 201
 prop(310, 201, term, 2).
+prop(310, 201, section, 201).
 prop(310, 201, instructor, "Elisa Baniassad").
 prop(310, 201, day, tth).
 prop(310, 201, sTime, 12.5).
@@ -849,6 +1119,7 @@ prop(312, _, prereq, 210).
 
 % section 101
 prop(312, 101, term, 1).
+prop(312, 101, section, 101).
 prop(312, 101, instructor, "David Poole").
 prop(312, 101, day, mwf).
 prop(312, 101, sTime, 12).
@@ -869,6 +1140,7 @@ prop(313, _, prereq, 221).
 
 % section 101
 prop(313, 101, term, 1).
+prop(313, 101, section, 101).
 prop(313, 101, instructor, "Jonatan Schroeder").
 prop(313, 101, day, mwf).
 prop(313, 101, sTime, 11).
@@ -878,6 +1150,7 @@ prop(313, 101, room, 310).
 
 % section 203
 prop(313, 203, term, 2).
+prop(313, 203, section, 203).
 prop(313, 203, instructor, "Jonatan Schroeder").
 prop(313, 203, day, mwf).
 prop(313, 203, sTime, 14).
@@ -887,6 +1160,7 @@ prop(313, 203, room, 200).
 
 % section 204
 prop(313, 204, term, 2).
+prop(313, 204, section, 204).
 prop(313, 204, instructor, "Donald Acton").
 prop(313, 204, day, tth).
 prop(313, 204, sTime, 12.5).
@@ -903,6 +1177,7 @@ prop(314, _, prereq, 221).
 
 % section 101
 prop(314, 101, term, 1).
+prop(314, 101, section, 101).
 prop(314, 101, instructor, "Michael van der Panne").
 prop(314, 101, day, mwf).
 prop(314, 101, sTime, 10).
@@ -912,6 +1187,7 @@ prop(314, 101, room, 110).
 
 % section 201
 prop(314, 201, term, 2).
+prop(314, 201, section, 201).
 prop(314, 201, instructor, "Dinesh Pai").
 prop(314, 201, day, mwf).
 prop(314, 201, sTime, 10).
@@ -929,6 +1205,7 @@ prop(317, _, prereq, 221).
 
 % section 101
 prop(317, 101, term, 1).
+prop(317, 101, section, 101).
 prop(317, 101, instructor, "Alan Wagner").
 prop(317, 101, day, mwf).
 prop(317, 101, sTime, 11).
@@ -938,6 +1215,7 @@ prop(317, 101, room, 121).
 
 % section 203
 prop(317, 201, term, 2).
+prop(317, 201, section, 203).
 prop(317, 201, instructor, "Alan Wagner").
 prop(317, 201, day, mwf).
 prop(317, 201, sTime, 15).
@@ -954,6 +1232,7 @@ prop(319, _, prereq, 310).
 
 % section 201
 prop(319, 201, term, 2).
+prop(319, 201, section, 201).
 prop(319, 201, instructor, "Jerry Jim").
 prop(319, 201, day, tth).
 prop(319, 201, sTime, 12.5).
@@ -973,6 +1252,7 @@ prop(320, _, prereq, 221).
 
 % section 101
 prop(320, 101, term, 1).
+prop(320, 101, section, 101).
 prop(320, 101, instructor, "Anne Condon").
 prop(320, 101, day, mwf).
 prop(320, 101, sTime, 14).
@@ -982,6 +1262,7 @@ prop(320, 101, room, 200).
 
 % section 102
 prop(320, 102, term, 1).
+prop(320, 102, section, 102).
 prop(320, 102, instructor, "Patrice Belleville").
 prop(320, 102, day, mwf).
 prop(320, 102, sTime, 16).
@@ -991,6 +1272,7 @@ prop(320, 102, room, 200).
 
 % section 201
 prop(320, 201, term, 2).
+prop(320, 201, section, 201).
 prop(320, 201, instructor, "Geoffrey Tien").
 prop(320, 201, day, mwf).
 prop(320, 201, sTime, 10).
@@ -1000,6 +1282,7 @@ prop(320, 201, room, 200).
 
 % section 202
 prop(320, 202, term, 2).
+prop(320, 202, section, 202).
 prop(320, 202, instructor, "Anne Condon").
 prop(320, 202, day, mwf).
 prop(320, 202, sTime, 8).
@@ -1019,6 +1302,7 @@ prop(322, _, prereq, 221).
 
 % section 101
 prop(322, 101, term, 1).
+prop(322, 101, section, 101).
 prop(322, 101, instructor, "Jordan Johnson").
 prop(322, 101, day, tth).
 prop(322, 101, sTime, 17).
@@ -1028,6 +1312,7 @@ prop(322, 101, room, 1201).
 
 % section 201
 prop(322, 201, term, 2).
+prop(322, 201, section, 201).
 prop(322, 201, instructor, "TBA").
 prop(322, 201, day, tth).
 prop(322, 201, sTime, 9.5).
@@ -1047,6 +1332,7 @@ prop(340, _, prereq, 221).
 
 % section 101
 prop(340, 101, term, 1).
+prop(340, 101, section, 101).
 prop(340, 101, instructor, "Mark Schmidt").
 prop(340, 101, day, mwf).
 prop(340, 101, sTime, 16).
@@ -1056,6 +1342,7 @@ prop(340, 101, room, 166).
 
 % section 103
 prop(340, 103, term, 1).
+prop(340, 103, section, 103).
 prop(340, 103, instructor, "Michael Gelbart").
 prop(340, 103, day, mwf).
 prop(340, 103, sTime, 12).
@@ -1065,6 +1352,7 @@ prop(340, 103, room, 110).
 
 % section 201
 prop(340, 201, term, 2).
+prop(340, 201, section, 201).
 prop(340, 201, instructor, "Frank Wood").
 prop(340, 201, day, mwf).
 prop(340, 201, sTime, 13).
@@ -1081,6 +1369,7 @@ prop(410, _, prereq, 310).
 
 % section 101
 prop(410, 101, term, 1).
+prop(410, 101, section, 101).
 prop(410, 101, instructor, "Elisa Baniassad").
 prop(410, 101, day, tth).
 prop(410, 101, sTime, 11).
@@ -1098,6 +1387,7 @@ prop(418, _, prereq, 320).
 
 % section 101
 prop(418, 101, term, 1).
+prop(418, 101, section, 101).
 prop(418, 101, instructor, "Mark Greenstreet").
 prop(418, 101, day, mwf).
 prop(418, 101, sTime, 13).
@@ -1114,6 +1404,7 @@ prop(420, _, prereq, 320).
 
 % section 101
 prop(420, 101, term, 1).
+prop(420, 101, section, 101).
 prop(420, 101, instructor, "Alan Hu").
 prop(420, 101, day, mwf).
 prop(420, 101, sTime, 9).
@@ -1123,6 +1414,7 @@ prop(420, 101, room, 110).
 
 % section 201
 prop(420, 201, term, 2).
+prop(420, 201, section, 201).
 prop(420, 201, instructor, "Hu Fu").
 prop(420, 201, day, mwf).
 prop(420, 201, sTime, 13).
@@ -1130,17 +1422,3 @@ prop(420, 201, eTime, 14).
 prop(420, 201, building, "Hugh Dempster Pavilion").
 prop(420, 201, room, 110).
 
-
-% course 436D
-prop(cpsc436D, _, course, "436D").
-prop(cpsc436D, _, name, "Topics in Computer Science").
-prop(cpsc436D, _, type, "fundamental").
-
-% section 201
-prop(cpsc436D, 201, term, 2).
-prop(cpsc436D, 201, instructor, "Hu Fu").
-prop(cpsc436D, 201, day, mwf).
-prop(cpsc436D, 201, sTime, 15).
-prop(cpsc436D, 201, eTime, 17).
-prop(cpsc436D, 201, building, "Hugh Dempster Pavilion").
-prop(cpsc436D, 201, room, 301).
