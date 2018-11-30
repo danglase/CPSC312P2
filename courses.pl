@@ -2,7 +2,7 @@
 % Authors: Reed Esler, Dan Glaser
 
 :-style_check(-discontiguous).
- :-  dynamic  lookup/2.
+:-  dynamic  lookup/2.
 
 %
 % Start of the bot
@@ -41,151 +41,23 @@ users(mynamejeff, mypassword, []).
 
 askuser(List) :-
     write("What would you like to do?\n"),
-    write("1. When is a course offered?\n"),
-    write("2. Who teaches a specific course?\n"),
-    write("3. Create a schedule.\n"),
+    write("1. Create a schedule.\n"),
+    write("2. When is a course offered?\n"),
+    write("3. Who teaches a specific course?\n"),
     write("4. What are the prerequisites of a course?\n"),
     write("5. What course should I take?\n"),
     write("6. What courses have I taken?\n"),
     write("7. What other classes do I need to complete my degree?\n"),
-    write("8. Other\n"),
-    write("9. Exit\n"),
+    write("0. Exit\n"),
     readAtom(Input),
     user_query(Input, List).
-
-%%%%%
-%%%%% User Query 1
-%%%%% 1. When is a course offered?
-%%%%%
-
-user_query(Input, List) :-
-    Input = 1,
-    write("What class?"),
-    readAtom(Class),
-    user_offered(Class, List).
-
-user_offered(X, List) :-
-    write("CPSC "),
-    write(X),
-    write(" is offered at these times:\n"),
-    findall(S, prop(X, S, section, S), Sections),
-    findtimes(X, Sections, List).
-
-findtimes(_, [], List) :-
-    write("\n\n"),
-    askuser(List).
-
-findtimes(X, [SH | ST], List) :-
-    prop(X, SH, day, A),
-    A = mwf,
-    write("Section "),
-    write(SH),
-    write(" is offered on "),
-    write("Monday, Wednesday, and Friday from "),
-    prop(X, SH, sTime, B),
-    convertTime(B),
-    write(" to "),
-    prop(X, SH, eTime, C),
-    convertTime(C),
-    write(" in term "),
-    prop(X, SH, term, D),
-    write(D),
-    write(".\n"),
-    findtimes(X, ST, List).
-
-findtimes(X, [SH | ST], List) :-
-    prop(X, SH, day, A),
-    A = tth,
-    write("Section "),
-    write(SH),
-    write(" is offered on "),
-    write("Tuesday, and Thursday from "),
-    prop(X, SH, sTime, B),
-    convertTime(B),
-    write(" to "),
-    prop(X, SH, eTime, C),
-    convertTime(C),
-    write(" in term "),
-    prop(X, SH, term, D),
-    write(D),
-    write(".\n"),
-    findtimes(X, ST, List).
-
-%%%%%
-%%%%% User Query 2
-%%%%% 2. Who teaches a specific course?
-%%%%%
-
-user_query(Input, List) :-
-    Input = 2,
-    write("What class?"),
-    readAtom(Class),
-    write("Specific section? (Type section number, or N for all sections)"),
-    readAtom(Section),
-    userFindTeacher(Class, Section, List).
-
-userFindTeacher(X, 'N', List) :-
-    findall(T, prop(X, _, instructor, T), R),
-    write("The professors for CPSC "),
-    write(X),
-    write(" are: "),
-    write(R),
-    write("\n\n"),
-    askuser(List).
-
-userFindTeacher(X, Y, List) :-
-    findall(T, prop(X, Y, instructor, T), R),
-    write("The professor for CPSC "),
-    write(X),
-    write(" is "),
-    write(R),
-    write("\n\n"),
-    askuser(List).
-
-%%%%%
-%%%%% Query 3
-%%%%% 3. Can I take some courses at the same time?
-%%%%%
-
-user_query(Input, _) :-
-    Input = 3,
-    findSchedule().
-
-%%%%%
-%%%%% User Query 4
-%%%%% 4. What are the prerequisites of a course?
-%%%%%
-
-user_query(Input, List) :-
-    Input = 4,
-    write("What class?"),
-    readAtom(Class),
-    userFindPreReqs(Class, List).
-
-userFindPreReqs(X, List) :-
-    findall(P, prop(X, _, prereq, P), R),
-    write("The prerequisites for CPSC "),
-    write(X),
-    write(" are: "),
-    write(R),
-    write("\n\n"),
-    askuser(List).
-
-
-
-user_query(Input, List) :-
-    Input = 5,
-    write("Based on the courses that you have taken, a good course to take next would be CPSC "),
-%%%%%%%%%% TODO %%%%%%%%%%
-    List.
 
 %%%%%
 %%%%% User Query 6
 %%%%% 6. What courses have I taken?
 %%%%%
 
-user_query(Input, List) :-
-    Input = 6,
+user_query(6, List) :-
     write("The courses you have taken are: \n"),
     print_classes(List, List).
 
@@ -246,17 +118,21 @@ findNeeds([], List) :-
     askuser(List).
 
 findNeeds(Needs, List) :-
-    print_classes(Needs, List),
+    print_classes(Needs, List).
+
+
+%%%%%
+%%%%% User Query 0
+%%%%% 0. Exit
+%%%%%
+
+user_query(0, _) :-
+    query(0).
+
+% forward all other queries to the non-user specific query
+user_query(Input, List) :-
+    query(Input),
     askuser(List).
-
-%%%%%%%%%% TODO %%%%%%%%%%
-user_query(Input, _) :-
-    Input = 8,
-    query(Input).
-
-user_query(Input, _) :-
-    Input = 9,
-    query(Input).
 
 %%%
 %%% non-user access
@@ -264,23 +140,35 @@ user_query(Input, _) :-
 
 ask() :-
     write("Hello! I am here to help you with your computer science scheduling needs. What would you like to do?\n"),
-    write("1. When is a course offered?\n"),
-    write("2. Who teaches a specific course?\n"),
-    write("3. Can I take two specific courses at the same time?\n"),
+    write("1. Create a schedule.\n"),
+    write("2. When is a course offered?\n"),
+    write("3. Who teaches a specific course?\n"),
     write("4. What are the prerequisites of a course?\n"),
     write("5. What course should I take?\n"),
-    write("6. Other\n"),
+    write("0. Exit\n"),
     readAtom(Input),
-    query(Input).
+    handleQuery(Input).
+
+handleQuery(0) :- query(0).
+handleQuery(Input) :-
+    query(Input),
+    ask().
 
 %%%%%
 %%%%% Query 1
-%%%%% 1. When is a course offered?
+%%%%% 1. Create a schedule
 %%%%%
 
-query(Input) :-
-    Input = 1,
-    write("What class?"),
+query(1) :-
+    findSchedule().
+
+%%%%%
+%%%%% Query 2
+%%%%% 2. When is a course offered?
+%%%%%
+
+query(2) :-
+    write("What class? "),
     readAtom(Class),
     offered(Class).
 
@@ -292,8 +180,7 @@ offered(X) :-
     find_times(X, Sections).
 
 find_times(_, []) :-
-    write("\n\n"),
-    ask().
+    write("\n\n").
 
 find_times(X, [SH | ST]) :-
     prop(X, SH, day, A),
@@ -332,27 +219,24 @@ find_times(X, [SH | ST]) :-
     find_times(X, ST).
 
 %%%%%
-%%%%% Query 2
-%%%%% 2. Who teaches a specific course?
+%%%%% Query 3
+%%%%% 3. Who teaches a specific course?
 %%%%%
 
-query(Input) :-
-    Input = 2,
-    write("What class?"),
+query(3) :-
+    write("What class? "),
     readAtom(Class),
-    write("Specific section? (Type section number, or N for all sections)"),
+    write("Specific section? (Type section number, or N for all sections) "),
     readAtom(Section),
     findTeacher(Class, Section).
 
-findTeacher(X, Y) :-
-    Y = "N",
+findTeacher(X, 'N') :-
     findall(T, prop(X, _, instructor, T), R),
     write("The professors for CPSC "),
     write(X),
     write(" are: "),
     write(R),
-    write("\n\n"),
-    ask().
+    write("\n\n").
 
 findTeacher(X, Y) :-
     findall(T, prop(X, Y, instructor, T), R),
@@ -360,108 +244,15 @@ findTeacher(X, Y) :-
     write(X),
     write(" is "),
     write(R),
-    write("\n\n"),
-    ask().
-
-%%%%%
-%%%%% Query 3
-%%%%% 3. Can I take some courses at the same time?
-%%%%%
-
-query(Input) :-
-    Input = 3,
-    write("Lets take a look and see if you can take the classes at the same time. What is the first class?"),
-    readAtom(ClassOne),
-    write("What is the second class?"),
-    readAtom(ClassTwo),
-
-    printCompatableSections(ClassOne, _, ClassTwo, _),
-    ask().
-
-printCompatableSections(Course1, Sec1, Course2, Sec2) :-
-    differentTerms(Course1, Sec1, Course2, Sec2),
-    write("Yes, you can take these two courses, as CPSC "),
-    write(Course1),
-    write(" Sec: "),
-    write(Sec1),
-    write(" and CPSC "),
-    write(Course2),
-    write(" Sec: "),
-    write(Sec2),
-    write(" are in different terms.\n\n").
-
-printCompatableSections(Course1, Sec1, Course2, Sec2) :-
-    differentDays(Course1, Sec1, Course2, Sec2),
-    write("Yes, you can take these two courses, as CPSC "),
-    write(Course1),
-    write(" Sec: "),
-    write(Sec1),
-    write(" and CPSC "),
-    write(Course2),
-    write(" Sec: "),
-    write(Sec2),
-    write(" are on different days.\n\n").
-
-printCompatableSections(Course1, Sec1, Course2, Sec2) :-
-    differentTimes(Course1, Sec1, Course2, Sec2),
-    write("Yes, you can take these two courses, as CPSC "),
-    write(Course1),
-    write(" Sec: "),
-    write(Sec1),
-    write(" and CPSC "),
-    write(Course2),
-    write(" Sec: "),
-    write(Sec2),
-    write(" are at different times on the same day.\n\n").
-
-printCompatableSections(Course1, _, Course2, _) :-
-    write("Unfortunately you are not able to take the courses CPSC "),
-    write(Course1),
-    write(" and CPSC "),
-    write(Course2),
-    write(" at the same time as either the schedules overlap, or at least one of the courses do not exist.\n\n"),
-    ask().
-
-compatableSections(Course1, Sec1, Course2, Sec2) :-
-    differentTerms(Course1, Sec1, Course2, Sec2).
-
-compatableSections(Course1, Sec1, Course2, Sec2) :-
-    \+ differentTerms(Course1, Sec1, Course2, Sec2),
-    differentDays(Course1, Sec1, Course2, Sec2).
-
-compatableSections(Course1, Sec1, Course2, Sec2) :-
-    \+ differentTerms(Course1, Sec1, Course2, Sec2),
-    \+ differentDays(Course1, Sec1, Course2, Sec2),
-    differentTimes(Course1, Sec1, Course2, Sec2).
-
-differentTerms(Course1, Sec1, Course2, Sec2) :-
-    prop(Course1, Sec1, term, Term1),
-    prop(Course2, Sec2, term, Term2),
-    Term1 \= Term2.
-
-differentDays(Course1, Sec1, Course2, Sec2) :-
-    prop(Course1, Sec1, day, Day1),
-    prop(Course2, Sec2, day, Day2),
-    Day1 \= Day2.
-
-differentTimes(Course1, Sec1, Course2, Sec2) :-
-    prop(Course1, Sec1, sTime, Stime1),
-    prop(Course1, Sec1, eTime, Etime1),
-    prop(Course2, Sec2, sTime, Stime2),
-    prop(Course2, Sec2, eTime, Etime2),
-    (
-        Stime1 >= Etime2;
-        Stime2 >= Etime1
-    ).
+    write("\n\n").
 
 %%%%%
 %%%%% Query 4
 %%%%% 4. What are the prerequisites of a course?
 %%%%%
 
-query(Input) :-
-    Input = 4,
-    write("What class?"),
+query(4) :-
+    write("What class? "),
     readAtom(Class),
     findPreReqs(Class).
 
@@ -471,8 +262,7 @@ findPreReqs(X) :-
     write(X),
     write(" are: "),
     write(R),
-    write("\n\n"),
-    ask().
+    write("\n\n").
 
 %
 % 5. What course should I take?
@@ -506,8 +296,7 @@ fields(In, High) :-
     In = 5,
     find_field("ethics", High).
 
-find_field(In, High) :-
-    High = "N",
+find_field(In, 'N') :-
     write("You should start with CPSC "),
     findall(C, prop(C, _, type, In), R),
     list_min(R, Min),
@@ -524,15 +313,6 @@ find_field(In, High) :-
     write(Min),
     write("\n\n").
 
-% Not working currently
-% find_field(In, High) :-
-%     findall(C, prop(C, _, type, In), R),
-%     filter(High, R, Z),
-%     list_min(Z, Min),
-%     write("There are not anymore higher level courses in the field of "),
-%     write(In),
-%     write(".\n\n").
-
 filter(N, Y, Z) :-
     findall(X, (member(X, Y), X > N), Z).
 
@@ -547,197 +327,44 @@ list_min([H0, H1|T], Min) :-
     H0 > H1,
     list_min([H1|T], Min).
 
-%
-% 6. Other
-%
-query(Input) :-
-    Input = 6,
-    write("What would you like to know?\n"),
-    readLine(Question),
-    q(Question, End, Ans),
-    member(End, [[], ['?'], ['.']]),
-    write(Ans).
-
-question(Ans) :-
-    write("Ask me: "), flush_output(current_output),
-    readLine(Ln),
-    q(Ln,End,Ans),
-    member(End,[[],['?'],['.']]).
-
-q(['Is' | T0], T2, Obj) :-
-    nounp(T0, T1, Obj),
-    mp(T1, T2, Obj).
-q(['What', is | T0], T1, Obj) :-
-    mp(T0, T1, Obj).
-q(['What', is | T0], T1, Obj) :-
-    nounp(T0, T1, Obj).
-q(['What' | T0], T2, Obj) :-
-    nounp(T0, T1, Obj),
-    mp(T1, T2, Obj).
-
-nounp(T0, T4, In) :-
-    determiner(T0, T1, In),
-    adjective(T1, T2, In),
-    noun(T2, T3, In),
-    mp(T3, T4, In).
-
-mp(T0, T2, Sub) :-
-    related(T0, T1, Sub, Ob),
-    nounp(T1, T2, Ob).
-mp([that | T0], T2, Sub) :-
-    related(T0, T1, Sub, Ob),
-    nounp(T1, T2, Ob).
-mp(T, T, _).
-
-determiner([the | T], T, _).
-determiner([a | T], T, _).
-determiner(T, T, _).
-
-adjective(T0, T2, In) :-
-    adj(T0, T1, In),
-    adjective(T1, T2, In).
-adjective(T, T, _).
-
-%
-% Dictionary
-%
-noun([cpsc   | T], T, X) :- prop(X, _, course, X).
-noun([course | T], T, X) :- prop(X, _, course, X).
-noun([class  | T], T, X) :- prop(X, _, course, X).
-
-noun([professor  | T], T, X) :- prop(_, _, instructor, X).
-noun([prof       | T], T, X) :- prop(_, _, instructor, X).
-noun([teacher    | T], T, X) :- prop(_, _, instructor, X).
-noun([instructor | T], T, X) :- prop(_, _, instructor, X).
-
-noun([day | T], T, X) :- prop(_, _, day, X).
-
-noun([building | T], T, X) :- prop(_, _, building, X).
-
-noun([type | T], T, X) :- prop(_, _, type, X).
-
-noun([room | T],T,Obj) :- prop(_, _, room, Obj).
-
-noun([Class | T], T, X) :- prop(X, _, course, Class).
-
-related([the, professor, of | T], T, X, Y) :- prop(Y, _, instructor, X).
-related([the, prof, of | T], T, X, Y) :- prop(Y, _, instructor, X).
-related([the, teacher, of | T], T, X, Y) :- prop(Y, _, instructor, X).
-related([the, instructor, of | T], T, X, Y) :- prop(Y, _, instructor, X).
-
-adj([large | T],T,Obj) :- large(Obj).
-adj([Lang,speaking | T],T,Obj) :- speaks(Obj,Lang).
 
 
 
-query(9).
+%%%%%
+%%%%% Query 0
+%%%%% 0. Exit
+%%%%%
+query(0).
 
 
 
 
-
-allSectionsCompatable([]).
-allSectionsCompatable([course(Course, Sec) | T]) :-
-    sectionCompatableWithAll(Course, Sec, T),
-    allSectionsCompatable(T).
-
-sectionCompatableWithAll(_, _, []).
-sectionCompatableWithAll(Course1, Sec1, [course(Course2, Sec2) | T]) :-
-    compatableSections(Course1, Sec1, Course2, Sec2),
-    sectionCompatableWithAll(Course1, Sec1, T).
-
-courseSectionPair(Course, Section, course(Course, Section)) :-
-    prop(Course, Section, day, _).
-
-courseListToPairs([], []).
-courseListToPairs([Course | T1], [course(Course, Sec) | T2]) :-
-    courseSectionPair(Course, Sec, course(Course, Sec)),
-    courseListToPairs(T1, T2).
-
-findCompatableSections(Courses, Sections) :-
-    courseListToPairs(Courses, Sections),
-    allSectionsCompatable(Sections).
-
-startTimes([], []).
-startTimes([course(Course, Sec) | T1], [Stime | T2]) :-
-    prop(Course, Sec, sTime, Stime),
-    startTimes(T1, T2).
-
-startTimeOfSchedule(Schedule, Stime) :-
-    startTimes(Schedule, Stimes),
-    min_list(Stimes, Stime).
-
-getAllStartTimes([], []).
-getAllStartTimes([Schedule | T], [Stime-Schedule | R]) :-
-    startTimeOfSchedule(Schedule, Stime),
-    getAllStartTimes(T, R).
+%%%%%%% Schedule building logic
 
 
-endTimes([], []).
-endTimes([course(Course, Sec) | T1], [Etime | T2]) :-
-    prop(Course, Sec, eTime, Etime),
-    endTimes(T1, T2).
-
-endTimeOfSchedule(Schedule, Etime) :-
-    endTimes(Schedule, Etimes),
-    max_list(Etimes, Etime).
-
-getAllEndTimes([], []).
-getAllEndTimes([Schedule | T], [Etime-Schedule | R]) :-
-    endTimeOfSchedule(Schedule, Etime),
-    getAllEndTimes(T, R).
-
-
-dayAndTerm(course(Course, Sec), Day-Term) :-
-    prop(Course, Sec, day, Day),
-    prop(Course, Sec, term, Term).
-
-daysOfSchedule([], R, R).
-daysOfSchedule([Course | T], Seen, R) :-
-    dayAndTerm(Course, DT),
-    daysOfSchedule(DT, T, Seen, R).
-daysOfSchedule(DT, T, Seen, R) :-
-    maplist(dif(DT), Seen),
-    daysOfSchedule(T, [DT | Seen], R).
-daysOfSchedule(DT, T, Seen, R) :-
-    member(DT, Seen),
-    daysOfSchedule(T, Seen, R).
-
-sumDays([], 0).
-sumDays([mwf-_ | T], R) :-
-    sumDays(T, R2),
-    R is R2 + 3.
-sumDays([tth-_ | T], R) :-
-    sumDays(T, R2),
-    R is R2 + 2.
-
-totalDaysOfSchedule(Schedule, R) :-
-    daysOfSchedule(Schedule, [], Days),
-    sumDays(Days, R).
-
-getAllDayCounts([], []).
-getAllDayCounts([Schedule | T], [Days-Schedule | R]) :-
-  totalDaysOfSchedule(Schedule, Days),
-  getAllDayCounts(T, R).
-
-
+% findSchedule creates a schedule out of user inputted courses
 findSchedule() :-
     write("What courses do you want to take?\n"), flush_output(current_output),
     readLine(Courses),
     findall(Sections, findCompatableSections(Courses, Sections), L),
     handleSchedules(L, [1,2,3]).
 
+% where there is no combination of courses
 handleSchedules([], _) :-
     write("There is no possible schedule with these courses.\n").
 
+% when one schedule is found
 handleSchedules([A], _) :-
     write("Schedule found:\n"),
     printSections(A).
 
+% when there are no more options left, show the first schedule
 handleSchedules([A | _], []) :-
     write("Schedule found:\n"),
     printSections(A).
 
+% when there are more than one schedules left, the user can pick a criteria
+% to filter down the list of schedules
 handleSchedules(L, AvailableOptions) :-
     length(L, Length),
     Length > 1,
@@ -780,17 +407,149 @@ getFewestDays(L, R) :-
     keysort(Counts, Sorted),
     allResults(Sorted, R).
 
+
+% allResults(List, R) is true when R is the first elements of List that have the same key
 allResults([], _, []).
 allResults([Stime-_ | _], Key, []) :-
     Stime \= Key.
 allResults([Stime-Schedule | T], Stime, [Schedule | R]) :-
     allResults(T, Stime, R).
-
 allResults([Key-Schedule | T], [Schedule | R]) :-
     allResults(T, Key, R).
 
 
-printSections([]).
+% getAllStartTimes(Schedules, StartTimes) is true when StartTimes is a key-value
+% pair of start times and schedules for the given schedules
+getAllStartTimes([], []).
+getAllStartTimes([Schedule | T], [Stime-Schedule | R]) :-
+    startTimeOfSchedule(Schedule, Stime),
+    getAllStartTimes(T, R).
+
+startTimeOfSchedule(Schedule, Stime) :-
+    startTimes(Schedule, Stimes),
+    min_list(Stimes, Stime).
+
+startTimes([], []).
+startTimes([course(Course, Sec) | T1], [Stime | T2]) :-
+    prop(Course, Sec, sTime, Stime),
+    startTimes(T1, T2).
+
+
+% getAllEndTimes(Schedules, EndTimes) is true when EndTimes is a key-value
+% pair of end times and schedules for the given schedules
+getAllEndTimes([], []).
+getAllEndTimes([Schedule | T], [Etime-Schedule | R]) :-
+    endTimeOfSchedule(Schedule, Etime),
+    getAllEndTimes(T, R).
+
+endTimeOfSchedule(Schedule, Etime) :-
+    endTimes(Schedule, Etimes),
+    max_list(Etimes, Etime).
+
+endTimes([], []).
+endTimes([course(Course, Sec) | T1], [Etime | T2]) :-
+    prop(Course, Sec, eTime, Etime),
+    endTimes(T1, T2).
+
+
+% getAllDayCounts(Schedules, Days) is true when Days is a key-value
+% pair of the number of days for each schedule
+getAllDayCounts([], []).
+getAllDayCounts([Schedule | T], [Days-Schedule | R]) :-
+    totalDaysOfSchedule(Schedule, Days),
+    getAllDayCounts(T, R).
+
+totalDaysOfSchedule(Schedule, R) :-
+    daysOfSchedule(Schedule, [], Days),
+    sumDays(Days, R).
+
+daysOfSchedule([], R, R).
+daysOfSchedule([Course | T], Seen, R) :-
+    dayAndTerm(Course, DT),
+    daysOfSchedule(DT, T, Seen, R).
+daysOfSchedule(DT, T, Seen, R) :-
+    maplist(dif(DT), Seen),
+    daysOfSchedule(T, [DT | Seen], R).
+daysOfSchedule(DT, T, Seen, R) :-
+    member(DT, Seen),
+    daysOfSchedule(T, Seen, R).
+
+dayAndTerm(course(Course, Sec), Day-Term) :-
+    prop(Course, Sec, day, Day),
+    prop(Course, Sec, term, Term).
+
+sumDays([], 0).
+sumDays([mwf-_ | T], R) :-
+    sumDays(T, R2),
+    R is R2 + 3.
+sumDays([tth-_ | T], R) :-
+    sumDays(T, R2),
+    R is R2 + 2.
+
+
+% findCompatableSections(Courses, Sections) when Sections is a compatable list of
+% sections from the given courses
+findCompatableSections(Courses, Sections) :-
+    courseListToPairs(Courses, Sections),
+    allSectionsCompatable(Sections).
+
+
+% allSectionsCompatable(Courses) is true if all courses in the list are compatable with each other
+allSectionsCompatable([]).
+allSectionsCompatable([course(Course, Sec) | T]) :-
+    sectionCompatableWithAll(Course, Sec, T),
+    allSectionsCompatable(T).
+
+sectionCompatableWithAll(_, _, []).
+sectionCompatableWithAll(Course1, Sec1, [course(Course2, Sec2) | T]) :-
+    compatableSections(Course1, Sec1, Course2, Sec2),
+    sectionCompatableWithAll(Course1, Sec1, T).
+
+courseSectionPair(Course, Section, course(Course, Section)) :-
+    prop(Course, Section, day, _).
+
+courseListToPairs([], []).
+courseListToPairs([Course | T1], [course(Course, Sec) | T2]) :-
+    courseSectionPair(Course, Sec, course(Course, Sec)),
+    courseListToPairs(T1, T2).
+
+% compatableSections(Course1, Sec1, Course2, Sec2) is true if Course1 Sec1
+% is compatable with Course2 Sec2
+compatableSections(Course1, Sec1, Course2, Sec2) :-
+    differentTerms(Course1, Sec1, Course2, Sec2).
+
+compatableSections(Course1, Sec1, Course2, Sec2) :-
+    \+ differentTerms(Course1, Sec1, Course2, Sec2),
+    differentDays(Course1, Sec1, Course2, Sec2).
+
+compatableSections(Course1, Sec1, Course2, Sec2) :-
+    \+ differentTerms(Course1, Sec1, Course2, Sec2),
+    \+ differentDays(Course1, Sec1, Course2, Sec2),
+    differentTimes(Course1, Sec1, Course2, Sec2).
+
+differentTerms(Course1, Sec1, Course2, Sec2) :-
+    prop(Course1, Sec1, term, Term1),
+    prop(Course2, Sec2, term, Term2),
+    Term1 \= Term2.
+
+differentDays(Course1, Sec1, Course2, Sec2) :-
+    prop(Course1, Sec1, day, Day1),
+    prop(Course2, Sec2, day, Day2),
+    Day1 \= Day2.
+
+differentTimes(Course1, Sec1, Course2, Sec2) :-
+    prop(Course1, Sec1, sTime, Stime1),
+    prop(Course1, Sec1, eTime, Etime1),
+    prop(Course2, Sec2, sTime, Stime2),
+    prop(Course2, Sec2, eTime, Etime2),
+    (
+        Stime1 >= Etime2;
+        Stime2 >= Etime1
+    ).
+
+
+printSections([]) :-
+    write("\n\n"),!.
 printSections([course(Course, Section) | T]) :-
     write("CPSC "),
     write(Course),
@@ -900,9 +659,32 @@ convertTime(T) :-
     T = 22,
     write("10:00PM").
 
+% readAtom reads in user input as an atom or a number if possible
+readAtom(R) :-
+    read_line_to_codes(user_input, Input),
+    parseInput(Input, R).
+
+parseInput(Input, R) :-
+    string_to_atom(Input,X),
+    atom_number(X, R),!.
+
+parseInput(Input, R) :-
+    string_to_atom(Input,R).
+
+% readLine reads a line of input as a list of atoms or numbers
+readLine(R) :-
+  read_line_to_codes(user_input, Input),
+  string_to_atom(Input,Atom),
+  atomic_list_concat(AtomList,' ',Atom),
+  parseAll(AtomList, R).
+
+parseAll([], []).
+parseAll([H | T1], [R | R2]) :-
+    parseInput(H, R),
+    parseAll(T1, R2).
+
 %
 % Course Information Database
-% Course(number, name, type, prereq, section, term, instructor, days, start time, end time, building, room)
 % Types can include: ai, fundamental, internet, graphics, etc.
 %
 % Problems:
@@ -1347,7 +1129,7 @@ prop(314, 201, room, 310).
 % course 317
 prop(317, _, course, 317).
 prop(317, _, name, "Internet Computing").
-prop(317, _, type, "fundamental").
+prop(317, _, type, "internet").
 prop(317, _, prereq, 213).
 prop(317, _, prereq, 221).
 
@@ -1571,6 +1353,22 @@ prop(420, 201, building, "Hugh Dempster Pavilion").
 prop(420, 201, room, 110).
 
 
+% course 430
+prop(430, _, course, 430).
+prop(430, _, name, "Computers and Society").
+prop(430, _, type, "ethics").
+
+% section 101
+prop(430, 101, term, 1).
+prop(430, 101, section, 101).
+prop(430, 101, instructor, "Kevin Leyton-Brown").
+prop(430, 101, day, tth).
+prop(430, 101, sTime, 14).
+prop(430, 101, eTime, 15.5).
+prop(430, 101, building, "Hugh Dempster Pavilion").
+prop(430, 101, room, 110).
+
+
 % course 436D
 prop(436, _, course, 436).
 prop(436, _, name, "Topics in Computer Science").
@@ -1584,25 +1382,3 @@ prop(436, 201, sTime, 15).
 prop(436, 201, eTime, 17).
 prop(436, 201, building, "Hugh Dempster Pavilion").
 prop(436, 201, room, 301).
-
-readAtom(R) :-
-    read_line_to_codes(user_input, Input),
-    parseInput(Input, R).
-
-parseInput(Input, R) :-
-    string_to_atom(Input,X),
-    atom_number(X, R),!.
-
-parseInput(Input, R) :-
-    string_to_atom(Input,R).
-
-readLine(R) :-
-  read_line_to_codes(user_input, Input),
-  string_to_atom(Input,Atom),
-  atomic_list_concat(AtomList,' ',Atom),
-  parseAll(AtomList, R).
-
-parseAll([], []).
-parseAll([H | T1], [R | R2]) :-
-    parseInput(H, R),
-    parseAll(T1, R2).
