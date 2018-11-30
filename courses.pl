@@ -1,4 +1,4 @@
- Course Schedule Bot
+% Course Schedule Bot
 % Authors: Reed Esler, Dan Glaser
 
 :-style_check(-discontiguous).
@@ -1382,3 +1382,87 @@ prop(436, 201, sTime, 15).
 prop(436, 201, eTime, 17).
 prop(436, 201, building, "Hugh Dempster Pavilion").
 prop(436, 201, room, 301).
+
+
+% course 425
+prop(425, _, course, 425).
+prop(425, _, name, "Computer Vision").
+prop(425, _, type, "graphics").
+
+% section 101
+prop(425, 101, term, 1).
+prop(425, 101, instructor, "Leonid Sigal").
+prop(425, 101, day, mwf).
+prop(425, 101, sTime, 15).
+prop(425, 101, eTime, 16).
+prop(425, 101, building, "West Mall Swing Space").
+prop(425, 101, room, 122).
+
+% section 201
+prop(425, 201, term, 2).
+prop(425, 201, instructor, "Leonid Sigal").
+prop(425, 201, day, tth).
+prop(425, 201, sTime, 12.5).
+prop(425, 201, eTime, 14).
+prop(425, 201, building, "Pharmaceutical Sciences Building").
+prop(425, 201, room, 1201).
+
+
+% course 426
+prop(426, _, course, 426).
+prop(426, _, name, "Computer Animation").
+prop(426, _, type, "graphics").
+
+% section 201
+prop(426, 201, term, 2).
+prop(426, 201, instructor, "Michiel Van De Panne").
+prop(426, 201, day, mwf).
+prop(426, 201, sTime, 8).
+prop(426, 201, eTime, 9).
+prop(426, 201, building, "Hugh Dempster Pavilion").
+prop(426, 201, room, 110).
+
+
+% course 522
+prop(522, _, course, 522).
+prop(522, _, name, "Artificial Intelligence II").
+prop(522, _, type, "ai").
+
+% section 201
+prop(522, 201, term, 2).
+prop(522, 201, instructor, "David Poole").
+prop(522, 201, day, tth).
+prop(522, 201, sTime, 9.5).
+prop(522, 201, eTime, 11).
+prop(522, 201, building, "Institute for Computing (ICICS/CS)").
+prop(522, 201, room, 246).
+
+
+% course 524
+prop(524, _, course, 524).
+prop(524, _, name, "Computer Graphics: Modeling").
+prop(524, _, type, "graphics").
+
+% section 201
+prop(524, 201, term, 2).
+prop(524, 201, instructor, "Alla Sheffer").
+prop(524, 201, day, tth).
+prop(524, 201, sTime, 10.5).
+prop(524, 201, eTime, 12).
+prop(524, 201, building, "Institute for Computing (ICICS/CS)").
+prop(524, 201, room, 246).
+
+
+% course 301
+prop(301, _, course, 301).
+prop(301, _, name, "Computing in the Life Sciences").
+prop(301, _, type, "ethics").
+
+% section 101
+prop(301, 101, term, 1).
+prop(301, 101, instructor, "Jerry Jim").
+prop(301, 101, day, tth).
+prop(301, 101, sTime, 15.5).
+prop(301, 101, eTime, 17).
+prop(301, 101, building, "Geography").
+prop(301, 101, room, 100).
