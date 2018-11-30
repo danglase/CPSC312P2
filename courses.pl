@@ -552,7 +552,8 @@ query(Input) :-
     write("What would you like to know?\n"),
     read(Question),
     q(Question, End, Ans),
-    member(End, [[], ['?'], ['.']]).
+    member(End, [[], ['?'], ['.']]),
+    write(Ans).
 
 question(Ans) :-
     write("Ask me: "), flush_output(current_output),
@@ -630,9 +631,6 @@ adj([Lang,speaking | T],T,Obj) :- speaks(Obj,Lang).
 
 
 
-% allSectionsCompatable([course(test1,101),course(test2,101),course(test3,101)]). should be true
-% allSectionsCompatable([course(test1,101),course(test2,101),course(test3,101),course(test5,101)]). should be false
-
 allSectionsCompatable([]).
 allSectionsCompatable([course(Course, Sec) | T]) :-
     sectionCompatableWithAll(Course, Sec, T),
@@ -660,23 +658,24 @@ startTimes([course(Course, Sec) | T1], [Stime | T2]) :-
     prop(Course, Sec, sTime, Stime),
     startTimes(T1, T2).
 
-endTimes([], []).
-endTimes([course(Course, Sec) | T1], [Etime | T2]) :-
-    prop(Course, Sec, eTime, Etime),
-    endTimes(T1, T2).
-
 startTimeOfSchedule(Schedule, Stime) :-
     startTimes(Schedule, Stimes),
     min_list(Stimes, Stime).
-
-endTimeOfSchedule(Schedule, Etime) :-
-    endTimes(Schedule, Etimes),
-    max_list(Etimes, Etime).
 
 getAllStartTimes([], []).
 getAllStartTimes([Schedule | T], [Stime-Schedule | R]) :-
     startTimeOfSchedule(Schedule, Stime),
     getAllStartTimes(T, R).
+
+
+endTimes([], []).
+endTimes([course(Course, Sec) | T1], [Etime | T2]) :-
+    prop(Course, Sec, eTime, Etime),
+    endTimes(T1, T2).
+
+endTimeOfSchedule(Schedule, Etime) :-
+    endTimes(Schedule, Etimes),
+    max_list(Etimes, Etime).
 
 getAllEndTimes([], []).
 getAllEndTimes([Schedule | T], [Etime-Schedule | R]) :-
@@ -684,22 +683,55 @@ getAllEndTimes([Schedule | T], [Etime-Schedule | R]) :-
     getAllEndTimes(T, R).
 
 
+dayAndTerm(course(Course, Sec), Day-Term) :-
+    prop(Course, Sec, day, Day),
+    prop(Course, Sec, term, Term).
+
+daysOfSchedule([], R, R).
+daysOfSchedule([Course | T], Seen, R) :-
+    dayAndTerm(Course, DT),
+    daysOfSchedule(DT, T, Seen, R).
+daysOfSchedule(DT, T, Seen, R) :-
+    maplist(dif(DT), Seen),
+    daysOfSchedule(T, [DT | Seen], R).
+daysOfSchedule(DT, T, Seen, R) :-
+    member(DT, Seen),
+    daysOfSchedule(T, Seen, R).
+
+sumDays([], 0).
+sumDays([mwf-_ | T], R) :-
+    sumDays(T, R2),
+    R is R2 + 3.
+sumDays([tth-_ | T], R) :-
+    sumDays(T, R2),
+    R is R2 + 2.
+
+totalDaysOfSchedule(Schedule, R) :-
+    daysOfSchedule(Schedule, [], Days),
+    sumDays(Days, R).
+
+getAllDayCounts([], []).
+getAllDayCounts([Schedule | T], [Days-Schedule | R]) :-
+  totalDaysOfSchedule(Schedule, Days),
+  getAllDayCounts(T, R).
+
+
 findSchedule() :-
     write("What courses do you want to take?\n"), flush_output(current_output),
     readln(Courses),
     findall(Sections, findCompatableSections(Courses, Sections), L),
-    handleSchedules(L, [1,2]).
+    handleSchedules(L, [1,2,3]).
 
 handleSchedules([], _) :-
     write("There is no possible schedule with these courses.\n").
 
 handleSchedules([A], _) :-
     write("Schedule found:\n"),
-    write(A).
+    printSections(A).
 
 handleSchedules([A | _], []) :-
     write("Schedule found:\n"),
-    write(A).
+    printSections(A).
 
 handleSchedules(L, AvailableOptions) :-
     length(L, Length),
@@ -720,10 +752,12 @@ printOptions([H | T]) :-
 
 option(1, "1. Latest start time\n").
 option(2, "2. Earliest end time\n").
+option(3, "3. Fewest days\n").
 
 filterList([], _, []).
 filterList(L, 1, R) :- getLatestStart(L, R).
 filterList(L, 2, R) :- getEarliestEnd(L, R).
+filterList(L, 3, R) :- getFewestDays(L, R).
 
 getLatestStart(L, R) :-
     getAllStartTimes(L, Stimes),
@@ -736,6 +770,11 @@ getEarliestEnd(L, R) :-
     keysort(Stimes, Sorted),
     allResults(Sorted, R).
 
+getFewestDays(L, R) :-
+    getAllDayCounts(L, Counts),
+    keysort(Counts, Sorted),
+    allResults(Sorted, R).
+
 allResults([], _, []).
 allResults([Stime-_ | _], Key, []) :-
     Stime \= Key.
@@ -746,6 +785,26 @@ allResults([Key-Schedule | T], [Schedule | R]) :-
     allResults(T, Key, R).
 
 
+printSections([]).
+printSections([course(Course, Section) | T]) :-
+    write("CPSC "),
+    write(Course),
+    write(" Section "),
+    write(Section),
+    write(" at "),
+    prop(Course, Section, sTime, Stime),
+    convertTime(Stime),
+    write(" - "),
+    prop(Course, Section, eTime, Etime),
+    convertTime(Etime),
+    write(" "),
+    prop(Course, Section, day, Day),
+    write(Day),
+    write(" in term "),
+    prop(Course, Section, term, Term),
+    write(Term),
+    write("\n"),
+    printSections(T).
 
 
 convertTime(T) :-
