@@ -14,9 +14,9 @@
 
 login() :-
     write("Username:\n"),
-    read(Username),
+    readAtom(Username),
     write("Password:\n"),
-    read(Password),
+    readAtom(Password),
     database(Username, Password).
 
 database(Username, Password) :-
@@ -43,13 +43,14 @@ askuser(List) :-
     write("What would you like to do?\n"),
     write("1. When is a course offered?\n"),
     write("2. Who teaches a specific course?\n"),
-    write("3. Can I take two specific courses at the same time?\n"),
+    write("3. Create a schedule.\n"),
     write("4. What are the prerequisites of a course?\n"),
     write("5. What course should I take?\n"),
     write("6. What courses have I taken?\n"),
     write("7. What other classes do I need to complete my degree?\n"),
     write("8. Other\n"),
-    read(Input),
+    write("9. Exit\n"),
+    readAtom(Input),
     user_query(Input, List).
 
 %%%%%
@@ -60,7 +61,7 @@ askuser(List) :-
 user_query(Input, List) :-
     Input = 1,
     write("What class?"),
-    read(Class),
+    readAtom(Class),
     user_offered(Class, List).
 
 user_offered(X, List) :-
@@ -118,13 +119,12 @@ findtimes(X, [SH | ST], List) :-
 user_query(Input, List) :-
     Input = 2,
     write("What class?"),
-    read(Class),
+    readAtom(Class),
     write("Specific section? (Type section number, or N for all sections)"),
-    read(Section),
+    readAtom(Section),
     userFindTeacher(Class, Section, List).
 
-userFindTeacher(X, Y, List) :-
-    Y = "N",
+userFindTeacher(X, 'N', List) :-
     findall(T, prop(X, _, instructor, T), R),
     write("The professors for CPSC "),
     write(X),
@@ -147,10 +147,9 @@ userFindTeacher(X, Y, List) :-
 %%%%% 3. Can I take some courses at the same time?
 %%%%%
 
-%%%%%%%%%% TODO %%%%%%%%%%
 user_query(Input, _) :-
     Input = 3,
-    query(Input).
+    findSchedule().
 
 %%%%%
 %%%%% User Query 4
@@ -160,7 +159,7 @@ user_query(Input, _) :-
 user_query(Input, List) :-
     Input = 4,
     write("What class?"),
-    read(Class),
+    readAtom(Class),
     userFindPreReqs(Class, List).
 
 userFindPreReqs(X, List) :-
@@ -221,7 +220,7 @@ user_query(Input, List) :-
     Input = 7,
     write("Are you interested in the Bachelor of Arts in Computer Science, or the Bachelor of Science in Computer Science?\n"),
     write("Type 1 for arts, and type 2 for science.\n"),
-    read(Req),
+    readAtom(Req),
     findRequirements(Req, List).
 
 findRequirements(Req, List) :-
@@ -255,6 +254,10 @@ user_query(Input, _) :-
     Input = 8,
     query(Input).
 
+user_query(Input, _) :-
+    Input = 9,
+    query(Input).
+
 %%%
 %%% non-user access
 %%%
@@ -267,7 +270,7 @@ ask() :-
     write("4. What are the prerequisites of a course?\n"),
     write("5. What course should I take?\n"),
     write("6. Other\n"),
-    read(Input),
+    readAtom(Input),
     query(Input).
 
 %%%%%
@@ -278,7 +281,7 @@ ask() :-
 query(Input) :-
     Input = 1,
     write("What class?"),
-    read(Class),
+    readAtom(Class),
     offered(Class).
 
 offered(X) :-
@@ -336,9 +339,9 @@ find_times(X, [SH | ST]) :-
 query(Input) :-
     Input = 2,
     write("What class?"),
-    read(Class),
+    readAtom(Class),
     write("Specific section? (Type section number, or N for all sections)"),
-    read(Section),
+    readAtom(Section),
     findTeacher(Class, Section).
 
 findTeacher(X, Y) :-
@@ -368,9 +371,9 @@ findTeacher(X, Y) :-
 query(Input) :-
     Input = 3,
     write("Lets take a look and see if you can take the classes at the same time. What is the first class?"),
-    read(ClassOne),
+    readAtom(ClassOne),
     write("What is the second class?"),
-    read(ClassTwo),
+    readAtom(ClassTwo),
 
     printCompatableSections(ClassOne, _, ClassTwo, _),
     ask().
@@ -459,7 +462,7 @@ differentTimes(Course1, Sec1, Course2, Sec2) :-
 query(Input) :-
     Input = 4,
     write("What class?"),
-    read(Class),
+    readAtom(Class),
     findPreReqs(Class).
 
 findPreReqs(X) :-
@@ -482,9 +485,9 @@ query(Input) :-
     write("3. Computer Graphics\n"),
     write("4. Artificial Intelligence\n"),
     write("5. Ethics\n"),
-    read(In),
+    readAtom(In),
     write("What is the highest course you have taken in this field? (N for none)\n"),
-    read(High),
+    readAtom(High),
     fields(In, High).
 
 fields(In, High) :-
@@ -550,14 +553,14 @@ list_min([H0, H1|T], Min) :-
 query(Input) :-
     Input = 6,
     write("What would you like to know?\n"),
-    read(Question),
+    readLine(Question),
     q(Question, End, Ans),
     member(End, [[], ['?'], ['.']]),
     write(Ans).
 
 question(Ans) :-
     write("Ask me: "), flush_output(current_output),
-    readln(Ln),
+    readLine(Ln),
     q(Ln,End,Ans),
     member(End,[[],['?'],['.']]).
 
@@ -626,6 +629,8 @@ adj([large | T],T,Obj) :- large(Obj).
 adj([Lang,speaking | T],T,Obj) :- speaks(Obj,Lang).
 
 
+
+query(9).
 
 
 
@@ -718,7 +723,7 @@ getAllDayCounts([Schedule | T], [Days-Schedule | R]) :-
 
 findSchedule() :-
     write("What courses do you want to take?\n"), flush_output(current_output),
-    readln(Courses),
+    readLine(Courses),
     findall(Sections, findCompatableSections(Courses, Sections), L),
     handleSchedules(L, [1,2,3]).
 
@@ -739,7 +744,7 @@ handleSchedules(L, AvailableOptions) :-
     write(Length),
     write(" schedules found. To narrow it down, choose a criteria.\n"),
     printOptions(AvailableOptions),
-    read(N),
+    readAtom(N),
     filterList(L, N, R),
     delete(AvailableOptions, N, NewOptions),
     handleSchedules(R, NewOptions).
@@ -1579,3 +1584,25 @@ prop(436, 201, sTime, 15).
 prop(436, 201, eTime, 17).
 prop(436, 201, building, "Hugh Dempster Pavilion").
 prop(436, 201, room, 301).
+
+readAtom(R) :-
+    read_line_to_codes(user_input, Input),
+    parseInput(Input, R).
+
+parseInput(Input, R) :-
+    string_to_atom(Input,X),
+    atom_number(X, R),!.
+
+parseInput(Input, R) :-
+    string_to_atom(Input,R).
+
+readLine(R) :-
+  read_line_to_codes(user_input, Input),
+  string_to_atom(Input,Atom),
+  atomic_list_concat(AtomList,' ',Atom),
+  parseAll(AtomList, R).
+
+parseAll([], []).
+parseAll([H | T1], [R | R2]) :-
+    parseInput(H, R),
+    parseAll(T1, R2).
