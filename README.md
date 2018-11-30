@@ -7,9 +7,7 @@ Authors: Reed Esler, Dan Glaser
 Determining what courses you can take within a semester, and worrying about whether or not they overlap can cause many problems. With this project, we are hoping to resolve this problem by providing users with a list of courses available to a student that do not cause schedule conflicts and meet the users requirements.
 
 #### What is the something extra?
-
-If time is available, we will hopefully be able to create additional features such as a long term plan to provide users with quickest ways to meet degree requirements, and a full course load with specific professors.
+One of the useful features that we implemented is a user database that allows individuals to log in and view the courses that they have taken and what courses are still required before they are able to apply for graduation. Allow with this, there are a number of other features like quickly seeing which professors teach what sections and what the prerequisites are for a specific class.
 
 #### What did we learn from doing this?
-
-(This should be written after you have done the work.) What is the bottom-line? Is functional programming suitable for (part-of) the task? Make sure you include the evidence for your claims.
+We learnt that this sort of program works extremely well in prolog. The language is great for creating and storing a database and quickly searching through it for some requested information. Even though the syntax involve in prolog is a little different than what we are used to, a simple, text based database program runs extremely efficiently and is very interesting to implement.
