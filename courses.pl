@@ -125,22 +125,40 @@ user_query(Input, List) :-
 
 userFindTeacher(X, Y, List) :-
     Y = "N",
-    findall(T, prop(X, _, instructor, T), R),
+    findall(T, prop(X, _, instructor, T), Teach),
     write("The professors for CPSC "),
     write(X),
     write(" are: "),
-    write(R),
-    write("\n\n"),
+    write_prof(X, Teach),
+    write(".\n\n"),
     askuser(List).
 
 userFindTeacher(X, Y, List) :-
-    findall(T, prop(X, Y, instructor, T), R),
+    findall(T, prop(X, Y, instructor, T), Teach),
     write("The professor for CPSC "),
     write(X),
+    write(" section "),
+    write(Y),
     write(" is "),
-    write(R),
-    write("\n\n"),
+    write(Teach),
+    write(".\n\n"),
     askuser(List).
+
+write_prof(_, []).
+write_prof(X, [T1 | []]) :-
+    write("and "),
+    write(T1),
+    write(" teaching section "),
+    prop(X, S, instructor, T1),
+    write(S),
+    write_prof(X, []).
+write_prof(X, [T1 | T2]) :-
+    write(T1),
+    write(" teaching section "),
+    prop(X, S, instructor, T1),
+    write(S),
+    write(", "),
+    write_prof(X, T2).
 
 %%%%%
 %%%%% Query 3
@@ -471,9 +489,11 @@ findPreReqs(X) :-
     write("\n\n"),
     ask().
 
-%
-% 5. What course should I take?
-%
+%%%%%
+%%%%% Query 5
+%%%%% 5. What course should I take?
+%%%%%
+
 query(Input) :-
     Input = 5,
     write("Which field are you interested in?\n"),
@@ -486,6 +506,35 @@ query(Input) :-
     write("What is the highest course you have taken in this field? (N for none)\n"),
     read(High),
     fields(In, High).
+
+% fundamentals
+prop(110, _, type, "fundamental").
+prop(121, _, type, "fundamental").
+prop(210, _, type, "fundamental").
+prop(213, _, type, "fundamental").
+prop(221, _, type, "fundamental").
+prop(310, _, type, "fundamental").
+prop(312, _, type, "fundamental").
+prop(313, _, type, "fundamental").
+prop(319, _, type, "fundamental").
+prop(320, _, type, "fundamental").
+prop(410, _, type, "fundamental").
+prop(418, _, type, "fundamental").
+prop(420, _, type, "fundamental").
+
+% internet programming
+prop(317, _, type, "internet").
+
+% computer graphics
+prop(314, _, type, "graphics").
+prop(491, _, type, "graphics").
+
+% ai
+prop(322, _, type, "ai").
+prop(340, _, type, "ai").
+
+% ethics
+prop(430, _, type, "ethics").
 
 fields(In, High) :-
     In = 1,
@@ -544,9 +593,11 @@ list_min([H0, H1|T], Min) :-
     H0 > H1,
     list_min([H1|T], Min).
 
-%
-% 6. Other
-%
+%%%%%
+%%%%% Query 6
+%%%%% 6. Other
+%%%%%
+
 query(Input) :-
     Input = 6,
     write("What would you like to know?\n"),
@@ -755,7 +806,7 @@ convertTime(T) :-
 %
 % Course Information Database
 % Course(number, name, type, prereq, section, term, instructor, days, start time, end time, building, room)
-% Types can include: ai, fundamental, internet, graphics, etc.
+% Types can include: ai, fundamental, internet, graphics, ethics, etc.
 %
 % Problems:
 % Issue with courses that are in different buildings each day
@@ -767,8 +818,6 @@ convertTime(T) :-
 % course 110
 prop(110, _, course, 110).
 prop(110, _, name, "Computation, Programs and Programming").
-% fundamental
-prop(110, _, type, "fundamental").
 prop(110, _, prereq, none).
 
 % section 101
@@ -825,8 +874,6 @@ prop(110, 203, room, 101).
 % course 121
 prop(121, _, course, 121).
 prop(121, _, name, "Models of Computation").
-% fundamental
-prop(121, _, type, "fundamental").
 prop(121, _, prereq, none).
 
 % section 101
@@ -893,8 +940,6 @@ prop(121, 203, room, 6).
 % course 210
 prop(210, _, course, 210).
 prop(210, _, name, "Software Construction").
-% fundamental
-prop(210, _, type, "fundamental").
 % Pre-reqs: One of CPSC 107, CPSC 110, CPSC 260.
 % Will use 110 as the prereq as a place holder.
 prop(210, _, prereq, 110).
@@ -963,8 +1008,6 @@ prop(210, 203, room, 222).
 % course 213
 prop(213, _, course, 213).
 prop(213, _, name, "Introduction to Computer Systems").
-% fundamental
-prop(213, _, type, "fundamental").
 % Pre-reqs: All of CPSC 121, CPSC 210.
 prop(213, _, prereq, 121).
 prop(213, _, prereq, 210).
@@ -1013,8 +1056,6 @@ prop(213, 204, room, 310).
 % course 221
 prop(221, _, course, 221).
 prop(221, _, name, "Basic Algorithms and Data Structures").
-% fundamental
-prop(221, _, type, "fundamental").
 % Pre-reqs: One of CPSC 210, EECE 210, CPEN 221 and one of CPSC 121, MATH 220.
 % We will only use cpsc prereqs for simplicity
 prop(221, _, prereq, 210).
@@ -1074,8 +1115,6 @@ prop(221, 203, room, 1101).
 % course 310
 prop(310, _, course, 310).
 prop(310, _, name, "Introduction to Software Engineering").
-% fundamental
-prop(310, _, type, "fundamental").
 % Pre-reqs: CPSC 210.
 prop(310, _, prereq, 210).
 
@@ -1113,8 +1152,6 @@ prop(310, 201, room, 310).
 % course 312
 prop(312, _, course, 312).
 prop(312, _, name, "Functional and Logic Programming").
-% fundamental
-prop(312, _, type, "fundamental").
 prop(312, _, prereq, 210).
 
 % section 101
@@ -1131,8 +1168,6 @@ prop(312, 101, room, 310).
 % course 313
 prop(313, _, course, 313).
 prop(313, _, name, "Computer Hardware and Operating Systems").
-% fundamental
-prop(313, _, type, "fundamental").
 % Pre-reqs: Either (a) all of CPSC 213, CPSC 221 or (b) all of CPSC 210, CPSC 213, CPSC 260, EECE 320.
 % will use case (a) for simplicity
 prop(313, _, prereq, 213).
@@ -1172,7 +1207,6 @@ prop(313, 204, room, 153).
 % course 314
 prop(314, _, course, 314).
 prop(314, _, name, "Computer Graphics").
-prop(314, _, type, "graphics").
 prop(314, _, prereq, 221).
 
 % section 101
@@ -1199,7 +1233,6 @@ prop(314, 201, room, 310).
 % course 317
 prop(317, _, course, 317).
 prop(317, _, name, "Internet Computing").
-prop(317, _, type, "fundamental").
 prop(317, _, prereq, 213).
 prop(317, _, prereq, 221).
 
@@ -1227,7 +1260,6 @@ prop(317, 201, room, 166).
 % course 319
 prop(319, _, course, 319).
 prop(319, _, name, "Software Engineering Project").
-prop(319, _, type, "fundamental").
 prop(319, _, prereq, 310).
 
 % section 201
@@ -1244,8 +1276,6 @@ prop(319, 201, room, 110).
 % course 320
 prop(320, _, course, 320).
 prop(320, _, name, "Intermediate Algorithm Design and Analysis").
-% fundamental
-prop(320, _, type, "fundamental").
 % Pre-reqs: Either (a) CPSC 221 or (b) all of CPSC 260, EECE 320. (In addition to above pre-requisites, at least 3 credits from COMM 291, BIOL 300, MATH or STAT at 200 level or above.)
 % will use case (a) for simplicity
 prop(320, _, prereq, 221).
@@ -1294,8 +1324,6 @@ prop(320, 202, room, 200).
 % course 322
 prop(322, _, course, 322).
 prop(322, _, name, "Introduction to Artificial Intelligence").
-% artificial
-prop(322, _, type, "ai").
 % Pre-reqs: Either (a) CPSC 221 or (b) all of CPSC 260, EECE 320 and one of CPSC 210, EECE 210, EECE 309.
 % will use (a) for simplicity
 prop(322, _, prereq, 221).
@@ -1324,8 +1352,6 @@ prop(322, 201, room, 310).
 % course 340
 prop(340, _, course, 340).
 prop(340, _, name, "Machine Learning and Data Mining").
-% artificial
-prop(340, _, type, "ai").
 % Pre-reqs: One of MATH 152, MATH 221, MATH 223 and one of MATH 200, MATH 217, MATH 226, MATH 253, MATH 263 and one of STAT 200, STAT 203, STAT 241, STAT 251, COMM 291, ECON 325, ECON 327, PSYC 218, PSYC 278, PSYC 366, MATH 302, STAT 302, MATH 318, BIOL 300; and either (a) CPSC 221 or (b) all of CPSC 260, EECE 320 and one of CPSC 210, EECE 210, EECE 309.
 % will just use cpsc 221 for simplicity
 prop(340, _, prereq, 221).
@@ -1364,7 +1390,6 @@ prop(340, 201, room, 166).
 % course 410
 prop(410, _, course, 410).
 prop(410, _, name, "Advanced Software Engineering").
-prop(410, _, type, "fundamental").
 prop(410, _, prereq, 310).
 
 % section 101
@@ -1381,7 +1406,6 @@ prop(410, 101, room, 110).
 % course 418
 prop(418, _, course, 418).
 prop(418, _, name, "Parallel Computation").
-prop(418, _, type, "fundamental").
 prop(418, _, prereq, 313).
 prop(418, _, prereq, 320).
 
@@ -1399,7 +1423,6 @@ prop(418, 101, room, 301).
 % course 420
 prop(420, _, course, 420).
 prop(420, _, name, "Advanced Algorithms Design and Analysis").
-prop(420, _, type, "fundamental").
 prop(420, _, prereq, 320).
 
 % section 101
@@ -1422,3 +1445,36 @@ prop(420, 201, eTime, 14).
 prop(420, 201, building, "Hugh Dempster Pavilion").
 prop(420, 201, room, 110).
 
+
+% course 430
+prop(430, _, course, 430).
+prop(430, _, name, "Computers and Society").
+prop(430, _, prereq, none).
+
+% section 101
+prop(430, 101, term, 1).
+prop(430, 101, section, 101).
+prop(430, 101, instructor, "Kevin Leyton-Brown").
+prop(430, 101, day, tth).
+prop(430, 101, sTime, 14).
+prop(430, 101, eTime, 15.5).
+prop(430, 101, building, "Hugh Dempster Pavilion").
+prop(430, 101, room, 110).
+
+
+% course 491
+prop(491, _, course, 491).
+prop(491, _, name, "Interactive Digital Media Practicum").
+prop(491, _, prereq, 221).
+prop(491, _, prereq, 310).
+prop(491, _, prereq, 344).
+
+% section 201
+prop(430, 201, term, 2).
+prop(430, 201, section, 201).
+prop(430, 201, instructor, "N/A").
+prop(430, 201, day, mwf).
+prop(430, 201, sTime, 14).
+prop(430, 201, eTime, 15.5).
+prop(430, 201, building, "Hugh Dempster Pavilion").
+prop(430, 201, room, 310).
